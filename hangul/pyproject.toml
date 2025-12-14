@@ -1,0 +1,10 @@
+[project]
+name = "hangul"
+version = "0.0.1"
+description = "KULIM Hangul"
+license = { text = "CC BY-SA 4.0" }
+authors = [
+    { name = "jake1104", email = "iamjake1104@gmail.com" }
+]
+dependencies = [
+]

@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = []
+
+[project]
+name = "kulim"
+version = "0.1.0"
+description = "Korean Unified Linguistic Integration Manager"
+authors = [
+    { name = "jake1104", email = "iamjake1104@gmail.com" }
+]
+requires-python = ">=3.12,<4.0"
+dependencies = [
+    "grammar",
+    "hangul",
+    "numpy>=2.3.5",
+    "torch==2.8.0+cu129",
+]
+
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu129"
+explicit = true
+
+[tool.uv.sources]
+grammar = { workspace = true }
+hangul = { workspace = true }
+torch = { index = "pytorch" }
+
+[tool.uv.workspace]
+members = [
+    "grammar",
+    "hangul"
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.1",
+]
