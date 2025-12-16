@@ -100,6 +100,11 @@ See the [LICENSE](LICENSE.md) file for details.
   - GitHub: [@jake1104](https://github.com/jake1104)
   - Contact: [iamjake1104@gmail.com](mailto:iamjake1104@gmail.com)
 
+# resource
+
+This project uses the [UD Korean Kaist Treebank](https://universaldependencies.org/treebanks/ko_kaist/index.html) from the Universal Dependencies project
+, licensed under CC BY-SA 4.0.
+
 ---
 
 <p align="center">
