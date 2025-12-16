@@ -100,6 +100,11 @@ print(decompose_korean("한글"))
   - GitHub: [@jake1104](https://github.com/jake1104)
   - 문의: [iamjake1104@gmail.com](mailto:iamjake1104@gmail.com)
 
+# 자료
+
+본 프로젝트는 Universal Dependencies의 [UD Korean Kaist Treebank](https://universaldependencies.org/treebanks/ko_kaist/index.html)를 사용합니다.  
+이 데이터는 **CC BY-SA 4.0** 라이선스에 따라 제공됩니다.
+
 ---
 
 <p align="center">
