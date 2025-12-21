@@ -26,29 +26,21 @@ KULIM provides modular packages for each function.
 
 ### 1. Hangul (`hangul`)
 
-#### v0.0.1
+**Basic Hangul processing package.**
 
-**Hangul Processing Package**.
-
-- **Key Features**: Jamo Decomposition and Composition, Hangul validation, Check for Jongsung (final consonant)
-- It is a fast and lightweight pure utility module optimized for preprocessing tasks.
+- **Key Features**: Jamo decomposition/composition, Hangul validation, Jongsung (final consonant) check.
+- A fast and lightweight pure Python utility module optimized for preprocessing tasks.
 
 ### 2. Grammar (`grammar`)
 
-#### v0.1.0-rc.1
+**Core language processing engine.**
 
-**Core Language Processing Engine**. Depends on the Hangul package v0.0.1 above.
-
-- **Key Features**: Supports Morphological Analysis, Syntax Parsing, and Model Training.
-- **Technology**: Transformer-based hybrid tagging, Rust-accelerated Trie, GPU acceleration support
+- **Key Features**:
+  - **Morphological Analysis**: Provides detailed analysis results based on the `Morph` object (surface form, POS, lemma, properties, etc.).
+  - **Syntax Parsing**: Dependency parsing and sentence component identification (Subject, Object, Predicate, etc.).
+  - **Training System**: Supports CoNLL-U based model training and online learning.
+- **Technology**: Transformer + Viterbi hybrid, Rust-accelerated Trie, GPU acceleration support.
 - [View Details and Usage](grammar/README.en.md)
-
-### Future Development
-
-The following features are included in the roadmap:
-
-- **Romanization**: Standard Romanization library based on standard pronunciation rules
-- **G2P (Grapheme-to-Phoneme)**: Automated generation of Korean pronunciation notation considering context
 
 ## Installation
 
@@ -57,28 +49,60 @@ The following features are included in the roadmap:
 git clone https://github.com/jake1104/KULIM.git
 cd KULIM
 uv sync --all-extras
-pip install -e .
 ```
 
-## Quick Start
+## Core Features Summary
 
-Each package can be used independently or integrated.
+### 1. Morphological Analysis & Classification
+
+The `grammar` package returns analysis results as a list of `Morph` objects with rich attributes, not just plain text.
 
 ```python
-# 1. Grammar: Morphological Analysis
 from grammar import MorphAnalyzer
-analyzer = MorphAnalyzer()
-print(analyzer.analyze("Today, a friend went to school."))
 
-# 2. Hangul: Jamo Decomposition
-from hangul import decompose_korean
-print(decompose_korean("Hangul"))
-# [('ㅎ', 'ㅏ', 'ㄴ'), ('ㄱ', 'ㅡ', 'ㄹ')]
+analyzer = MorphAnalyzer(use_rust=True)
+result = analyzer.analyze("친구와 학교에 갔다.")
+
+for m in result:
+    print(f"[{m.surface}] POS: {m.pos}, Lemma: {m.lemma}")
+    print(f"  - Is Lexical: {m.is_lexical}")
+    print(f"  - Is Free: {m.is_free}")
 ```
 
-> **For detailed usage, please refer to the README of each package.**
+### 2. Syntax Parsing
+
+Analyzes the structure of a sentence to identify the syntactic components of each eojeol.
+
+```python
+from grammar import SyntaxAnalyzer, MorphAnalyzer
+
+m_analyzer = MorphAnalyzer()
+s_analyzer = SyntaxAnalyzer()
+
+# Execute analysis (Word, POS_Sequence, Component)
+syntax_result = s_analyzer.analyze(text="나는 밥을 먹었다.", morph_analyzer=m_analyzer)
+
+for word, pos, comp in syntax_result:
+    print(f"{word}: {comp.name}")
+    # 나: SUBJECT, 밥: OBJECT, 먹었다: PREDICATE
+```
+
+### 3. Hangul Jamo Processing
+
+```python
+from hangul import decompose_korean, has_jongsung
+
+# Jamo decomposition
+print(decompose_korean("한글")) # [('ㅎ', 'ㅏ', 'ㄴ'), ('ㄱ', 'ㅡ', 'ㄹ')]
+
+# Jongsung check
+print(has_jongsung("강")) # True
+```
+
+> **For detailed API specifications, please refer to the README of each package.**
 >
-> - [Grammar Package Guide](grammar/README.en.md)
+> - [Grammar Package Detailed Guide](grammar/README.en.md)
+> - [Hangul Package Detailed Guide](hangul/README.en.md)
 
 ## Version Info
 
@@ -100,7 +124,7 @@ See the [LICENSE](LICENSE.md) file for details.
   - GitHub: [@jake1104](https://github.com/jake1104)
   - Contact: [iamjake1104@gmail.com](mailto:iamjake1104@gmail.com)
 
-# resource
+## Resources
 
 This project uses the [UD Korean Kaist Treebank](https://universaldependencies.org/treebanks/ko_kaist/index.html) from the Universal Dependencies project
 , licensed under CC BY-SA 4.0.

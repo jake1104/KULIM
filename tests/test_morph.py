@@ -18,7 +18,7 @@ def test_morph_analysis_basic(analyzer):
     result = analyzer.analyze(sent)
     assert result is not None
     # Check if '친구' and '학교' are in the result
-    morphemes = [m[0] for m in result]
+    morphemes = [m.surface for m in result]
     assert "친구" in morphemes
     assert "학교" in morphemes
 

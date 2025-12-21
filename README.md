@@ -26,29 +26,21 @@ KULIM은 기능별로 모듈화된 패키지들을 제공합니다.
 
 ### 1. Hangul (`hangul`)
 
-#### v0.0.1
+**한글 기초 처리 패키지**입니다.
 
-**한글 처리 패키지**입니다.
-
-- **주요 기능**: 자모 분해(Decomposition) 및 결합(Composition), 한글 판별, 종성 유무 확인
-- 빠르고 가벼운 순수 유틸리티 모듈로, 전처리 작업에 최적화되어 있습니다.
+- **주요 기능**: 자모 분해(Decomposition) 및 결합(Composition), 한글 여부 판별, 종성 유무 확인
+- 빠르고 가벼운 순수 Python 유틸리티 모듈로, 전처리 작업에 최적화되어 있습니다.
 
 ### 2. Grammar (`grammar`)
 
-#### v0.1.0-rc.1
+**핵심 언어 처리 엔진**입니다.
 
-**핵심 언어 처리 엔진**입니다. 위의 Hangul 패키지 v0.0.1에 의존합니다.
-
-- **주요 기능**: 형태소 분석, 구문 분석(Syntax Parsing), 모델 학습 등을 지원합니다.
-- **기술**: Transformer 기반 하이브리드 태깅, Rust 가속 Trie, GPU 가속 지원
+- **주요 기능**:
+  - **형태소 분석**: `Morph` 객체 기반의 상세 분석 결과 제공 (표면형, 품사, 기본형, 속성 등)
+  - **구문 분석**: 의존 구문 분석 및 문장 성분(주어, 목적어, 서술어 등) 판별
+  - **학습 시스템**: CoNLL-U 기반 모델 학습 및 온라인 추가 학습 지원
+- **기술**: Transformer + Viterbi 하이브리드, Rust 가속 Trie, GPU 가속 지원
 - [상세 설명 및 사용법 보러가기](grammar/README.md)
-
-### 개발 예정
-
-다음 기능들이 로드맵에 포함되어 있습니다:
-
-- **로마자 표기 (Romanization)**: 표준 발음법에 따른 로마자 변환 라이브러리
-- **발음 변환 (G2P)**: 문맥을 고려한 한국어 발음 표기 생성 자동화
 
 ## 설치 방법
 
@@ -57,28 +49,60 @@ KULIM은 기능별로 모듈화된 패키지들을 제공합니다.
 git clone https://github.com/jake1104/KULIM.git
 cd KULIM
 uv sync --all-extras
-pip install -e .
 ```
 
-## 빠른 시작
+## 주요 기능 요약
 
-각 패키지는 독립적으로 또는 통합하여 사용할 수 있습니다.
+### 1. 형태소 분석 및 속성 판별
+
+`grammar` 패키지는 분석 결과를 단순히 텍스트로 돌려주는 것이 아니라, 풍부한 속성을 가진 `Morph` 객체 리스트로 반환합니다.
 
 ```python
-# 1. Grammar: 형태소 분석
 from grammar import MorphAnalyzer
-analyzer = MorphAnalyzer()
-print(analyzer.analyze("오늘 친구가 학교에 갔다."))
 
-# 2. Hangul: 자모 분해
-from hangul import decompose_korean
-print(decompose_korean("한글"))
-# [('ㅎ', 'ㅏ', 'ㄴ'), ('ㄱ', 'ㅡ', 'ㄹ')]
+analyzer = MorphAnalyzer(use_rust=True)
+result = analyzer.analyze("친구와 학교에 갔다.")
+
+for m in result:
+    print(f"[{m.surface}] 품사: {m.pos}, 기본형: {m.lemma}")
+    print(f"  - 실질형태소 여부: {m.is_lexical}")
+    print(f"  - 자립형태소 여부: {m.is_free}")
 ```
 
-> **상세한 사용법은 각 패키지의 README를 참조하세요.**
+### 2. 구문 분석 (Syntax Parsing)
+
+문장의 구조를 분석하여 각 어절의 문장 성분을 판별합니다.
+
+```python
+from grammar import SyntaxAnalyzer, MorphAnalyzer
+
+m_analyzer = MorphAnalyzer()
+s_analyzer = SyntaxAnalyzer()
+
+# 분석 실행 (Word, POS_Sequence, Component)
+syntax_result = s_analyzer.analyze(text="나는 밥을 먹었다.", morph_analyzer=m_analyzer)
+
+for word, pos, comp in syntax_result:
+    print(f"{word}: {comp.name}")
+    # 나: SUBJECT, 밥: OBJECT, 먹었다: PREDICATE
+```
+
+### 3. 한글 자모 처리
+
+```python
+from hangul import decompose_korean, has_jongsung
+
+# 자모 분해
+print(decompose_korean("한글")) # [('ㅎ', 'ㅏ', 'ㄴ'), ('ㄱ', 'ㅡ', 'ㄹ')]
+
+# 종성 확인
+print(has_jongsung("강")) # True
+```
+
+> **상세한 API 명세는 각 패키지의 README를 참조하세요.**
 >
-> - [Grammar 패키지 가이드](grammar/README.md)
+> - [Grammar 패키지 상세 가이드](grammar/README.md)
+> - [Hangul 패키지 상세 가이드](hangul/README.md)
 
 ## 버전 정보
 
@@ -100,7 +124,7 @@ print(decompose_korean("한글"))
   - GitHub: [@jake1104](https://github.com/jake1104)
   - 문의: [iamjake1104@gmail.com](mailto:iamjake1104@gmail.com)
 
-# 자료
+## 자료 (Resources)
 
 본 프로젝트는 Universal Dependencies의 [UD Korean Kaist Treebank](https://universaldependencies.org/treebanks/ko_kaist/index.html)를 사용합니다.  
 이 데이터는 **CC BY-SA 4.0** 라이선스에 따라 제공됩니다.

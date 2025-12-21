@@ -444,7 +444,7 @@ def run_benchmark(args):
 def format_result(result):
     if not result:
         return "(No result)"
-    return " + ".join(f"{surf}/{pos}" for surf, pos in result)
+    return " + ".join(str(m) for m in result)
 
 
 if __name__ == "__main__":

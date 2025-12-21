@@ -73,26 +73,73 @@ uv run grammar train corpus.conllu [OPTIONS]
 uv run grammar benchmark --rust
 ```
 
-## Python API
+## Detailed API Reference
 
-Python 프로젝트에서 라이브러리로 사용하는 방법입니다.
+### 1. `Morph` 객체 (DataClass)
+
+형태소 분석 결과의 개별 단위입니다.
+
+- **속성 (Attributes)**:
+
+  - `surface` (str): 표면형 (예: "갔")
+  - `pos` (str): 품사 태그 (예: "VV")
+  - `lemma` (str): 기본형 (예: "가다")
+  - `score` (float): 분석 점수 또는 비용
+  - `start`/`end` (int): 문장 내 시작/끝 위치
+  - `sub_morphs` (List[Morph]): 복합 형태소일 경우 하위 형태소 목록
+
+- **속성 판별 (Properties)**:
+  - `is_lexical`: 실질형태소 여부 (체언, 용언 등)
+  - `is_functional`: 형식형태소 여부 (조사, 어미, 접사 등)
+  - `is_free`: 자립형태소 여부
+  - `is_bound`: 의존형태소 여부
+  - `is_composite`: 복합 형태소 여부
+
+### 2. `MorphAnalyzer`
+
+- `analyze(text: str) -> List[Morph]`: 문장을 형태소 단위로 분석합니다.
+- `train(sentence_text, correct_morphemes)`: 문장 단위 온라인 추가 학습을 수행합니다.
+- `train_eojeol(surface, morphs)`: 특정 어절의 분석 결과를 강제로 학습시킵니다 (불규칙 활용 등).
+
+### 3. `SyntaxAnalyzer`
+
+- `analyze(text: str = None, morphemes: List[Morph] = None, morph_analyzer=None)`:
+  - 문장 성분을 분석합니다.
+  - 리턴 형식: `List[Tuple[word, pos_seq, SentenceComponent]]`
+- `SentenceComponent` (Enum):
+  - `SUBJECT` (주어), `OBJECT` (목적어), `PREDICATE` (서술어), `ADVERBIAL` (부사어), `DETERMINER` (관형어), `COMPLEMENT` (보어), `INDEPENDENT` (독립어)
+
+### 4. 유틸리티 함수
+
+별도의 분석기 객체 없이 `Morph` 객체를 판별할 때 사용합니다.
+
+- `is_lexical_morph(morph)`
+- `is_functional_morph(morph)`
+- `is_free_morph(morph)`
+- `is_bound_morph(morph)`
+
+## 사용 예시
 
 ```python
-from grammar import MorphAnalyzer
+from grammar import MorphAnalyzer, SyntaxAnalyzer
 
-# 분석기 초기화 (옵션 설정)
-analyzer = MorphAnalyzer(
-    use_rust=True,
-    use_gpu=False,
-    use_neural=True
-)
+# 1. 초기화
+analyzer = MorphAnalyzer(use_rust=True)
+syntax = SyntaxAnalyzer()
 
-# 분석 실행
-result = analyzer.analyze("아버지가 방에 들어가신다.")
+# 2. 형태소 분석
+morphs = analyzer.analyze("어제는 날씨가 좋았다.")
+# [어제/MAG, 는/JX, 날씨/NNG, 가/JKS, 좋/VA, 았다/EF, ./SF]
 
-# 결과 활용
-for word, pos in result:
-    print(f"{word}/{pos}")
+# 3. 속성 판별
+for m in morphs:
+    if m.is_lexical:
+        print(f"실질적 의미: {m.surface}")
+
+# 4. 구문 분석
+results = syntax.analyze(text="친구가 밥을 먹는다.", morph_analyzer=analyzer)
+for word, pos, comp in results:
+    print(f"{word} -> {comp.name}")
 ```
 
 ## Rust 모듈 정보

@@ -4,6 +4,7 @@ import os
 import json
 from collections import defaultdict
 from .utils import get_data_dir
+from .morph import Morph
 
 
 class SentenceComponent(Enum):
@@ -145,7 +146,7 @@ class SyntaxAnalyzer:
 
     def analyze(
         self,
-        morphemes: List[Tuple[str, str]] = None,
+        morphemes: List[Morph] = None,
         text: str = None,
         morph_analyzer=None,
     ) -> List[Tuple[str, str, SentenceComponent]]:
@@ -192,7 +193,7 @@ class SyntaxAnalyzer:
                 if not morphs:
                     morphs = [(eojeol, "UNKNOWN")]
 
-                all_morphs_flat.extend(m[0] for m in morphs)
+                all_morphs_flat.extend(m.surface for m in morphs)
                 chunk_indices.append((current_idx, current_idx + len(morphs)))
                 current_idx += len(morphs)
 
@@ -295,7 +296,7 @@ class SyntaxAnalyzer:
                         input_morphs = morph_analyzer.analyze(word)
                         if input_morphs:
                             # Use reliable input POS
-                            pos_seq = "+".join(m[1] for m in input_morphs)
+                            pos_seq = "+".join(m.pos for m in input_morphs)
 
                     if "JKO" in pos_seq:
                         component = SentenceComponent.OBJECT
@@ -335,7 +336,7 @@ class SyntaxAnalyzer:
                     results.append((eojeol, "UNKNOWN", SentenceComponent.UNKNOWN))
                     continue
 
-                pos_seq = "+".join(m[1] for m in chunk_morphemes)
+                pos_seq = "+".join(m.pos for m in chunk_morphemes)
                 component = self._determine_component(chunk_morphemes)
                 results.append((eojeol, pos_seq, component))
 
@@ -353,8 +354,8 @@ class SyntaxAnalyzer:
         # 각 덩어리의 문장 성분 결정
         results = []
         for chunk_morphemes in chunks:
-            word = "".join(m[0] for m in chunk_morphemes)
-            pos_seq = "+".join(m[1] for m in chunk_morphemes)
+            word = "".join(m.surface for m in chunk_morphemes)
+            pos_seq = "+".join(m.pos for m in chunk_morphemes)
             component = self._determine_component(chunk_morphemes)
             results.append((word, pos_seq, component))
 
@@ -363,19 +364,19 @@ class SyntaxAnalyzer:
 
         return results
 
-    def _group_into_chunks(
-        self, morphemes: List[Tuple[str, str]]
-    ) -> List[List[Tuple[str, str]]]:
+    def _group_into_chunks(self, morphemes: List[Morph]) -> List[List[Morph]]:
         """형태소 리스트를 의미 단위(어절 유사)로 그룹화"""
         chunks = []
         current_chunk = []
 
-        for i, (surf, pos) in enumerate(morphemes):
+        for i, m in enumerate(morphemes):
+            surf, pos = m.surface, m.pos
             if not current_chunk:
                 current_chunk.append((surf, pos))
                 continue
 
-            prev_surf, prev_pos = current_chunk[-1]
+            prev_m = current_chunk[-1]
+            prev_surf, prev_pos = prev_m.surface, prev_m.pos
 
             # 연결 규칙
             is_noun_josa = prev_pos.startswith("N") and pos.startswith(
@@ -392,43 +393,44 @@ class SyntaxAnalyzer:
             is_josa_josa = prev_pos.startswith("J") and pos.startswith("J")
 
             if is_noun_josa or is_verb_ending or is_affix or is_josa_josa:
-                current_chunk.append((surf, pos))
+                current_chunk.append(m)
             else:
                 # 새로운 덩어리 시작
                 chunks.append(current_chunk)
-                current_chunk = [(surf, pos)]
+                current_chunk = [m]
 
         if current_chunk:
             chunks.append(current_chunk)
 
         return chunks
 
-    def _determine_component(self, chunk: List[Tuple[str, str]]) -> SentenceComponent:
+    def _determine_component(self, chunk: List[Morph]) -> SentenceComponent:
         """단일 덩어리의 문장 성분 결정"""
         if not chunk:
             return SentenceComponent.UNKNOWN
 
         # 0. Check Learned Patterns
-        pos_seq = "+".join(pos for _, pos in chunk)
+        pos_seq = "+".join(m.pos for m in chunk)
         if pos_seq in self.learned_patterns:
             comp_name = self.learned_patterns[pos_seq]
             return SentenceComponent[comp_name]
 
         # 1. 전체가 문장 부호인지 확인
-        is_all_punctuation = all(p.startswith("S") for _, p in chunk)
+        is_all_punctuation = all(m.pos.startswith("S") for m in chunk)
         if is_all_punctuation:
             return SentenceComponent.PUNCTUATION
 
         # 2. 분석을 위해 끝에 붙은 문장 부호 제거 (예: "갔습니다." -> "갔습니다")
         # 문장 부호가 아닌 마지막 형태소를 찾음
-        effective_chunk = [m for m in chunk if not m[1].startswith("S")]
+        effective_chunk = [m for m in chunk if not m.pos.startswith("S")]
 
         if not effective_chunk:
             # 문장 부호만 있는 경우는 위에서 처리했으므로, 여기는 도달하지 않아야 함
             # 하지만 안전을 위해 처리
             return SentenceComponent.PUNCTUATION
 
-        last_surf, last_pos = effective_chunk[-1]
+        last_morph = effective_chunk[-1]
+        last_surf, last_pos = last_morph.surface, last_morph.pos
 
         # 3. 서술어 (용언으로 끝남)
         # 어미(EF, EC, ETN, ETM)로 끝나는 경우도 서술어의 활용형일 수 있음
@@ -436,8 +438,8 @@ class SyntaxAnalyzer:
         # 여기서는 단순화하여 처리
 
         has_verb = any(
-            p.startswith("V") or p.startswith("XSV") or p.startswith("XSA")
-            for _, p in effective_chunk
+            m.pos.startswith("V") or m.pos.startswith("XSV") or m.pos.startswith("XSA")
+            for m in effective_chunk
         )
 
         if last_pos.startswith("EF"):  # 종결 어미 -> 서술어
@@ -455,7 +457,7 @@ class SyntaxAnalyzer:
             # chunk에서 조사만 추출 (뒤에서부터)
             reversed_particles = []
             for m in reversed(chunk):
-                if m[1].startswith("J"):
+                if m.pos.startswith("J"):
                     reversed_particles.append(m)
                 else:
                     break  # 조사가 아니면 중단 (체언 등)
@@ -465,7 +467,8 @@ class SyntaxAnalyzer:
 
             final_decision = None
 
-            for surf, pos in reversed_particles:
+            for m in reversed_particles:
+                surf, pos = m.surface, m.pos
                 if pos == "JKB":  # 부사격
                     return SentenceComponent.ADVERBIAL
                 elif pos == "JKO":  # 목적격
@@ -491,15 +494,15 @@ class SyntaxAnalyzer:
                 return SentenceComponent.ADVERBIAL  # 와/과
 
         # 3. 부사 (MAG, MAJ)
-        if any(p.startswith("MA") for _, p in chunk):
+        if any(m.pos.startswith("MA") for m in chunk):
             return SentenceComponent.ADVERBIAL
 
         # 4. 관형사 (MM)
-        if any(p == "MM" for _, p in chunk):
+        if any(m.pos == "MM" for m in chunk):
             return SentenceComponent.DETERMINER
 
         # 5. 감탄사 (IC)
-        if any(p == "IC" for _, p in chunk):
+        if any(m.pos == "IC" for m in chunk):
             return SentenceComponent.INDEPENDENT
 
         # 6. 문장 부호 (S...) -> 위에서 처리함

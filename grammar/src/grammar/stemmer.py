@@ -14,23 +14,7 @@ except ImportError:
     from scorers import SCORING
 
 
-@dataclass
-class Morpheme:
-    """형태소 정보"""
-
-    surface: str
-    pos: str
-    lemma: str
-    confidence: float = 1.0
-    sub_morphemes: List["Morpheme"] = None
-
-    def __str__(self):
-        if self.sub_morphemes:
-            return " + ".join([str(m) for m in self.sub_morphemes])
-        return f"{self.surface}/{self.pos}"
-
-    def __repr__(self):
-        return self.__str__()
+from .morph import Morph
 
 
 class Stemmer:
@@ -46,7 +30,7 @@ class Stemmer:
         self.use_rust = use_rust
         self.constraints = ConstraintValidator()
 
-    def analyze(self, text: str) -> List[List[Morpheme]]:
+    def analyze(self, text: str) -> List[List[Morph]]:
         import re
 
         # Split by period more aggressively to ensure punctuation is treated as separate token
@@ -61,7 +45,7 @@ class Stemmer:
                 results.append(morphemes)
         return results
 
-    def _analyze_sentence(self, sentence: str) -> List[Morpheme]:
+    def _analyze_sentence(self, sentence: str) -> List[Morph]:
         """문맥 인식 DP 분석 - HMM 우선"""
         if not sentence:
             return []
@@ -92,11 +76,11 @@ class Stemmer:
                         # e.g. "가/VV", "았/EP".
 
                         for i, (p, l) in enumerate(zip(pos_parts, lemma_parts)):
-                            final_morphemes.append(Morpheme(l, p, l))
+                            final_morphemes.append(Morph(l, p, l))
                             # Note: Setting surface=lemma for decomposed parts is standard unique representation
                             # unless we have exact surface span alignment.
                     else:
-                        final_morphemes.append(Morpheme(surface, pos, lemma))
+                        final_morphemes.append(Morph(surface, pos, lemma))
                 return final_morphemes
 
         n = len(sentence)
@@ -177,23 +161,23 @@ class Stemmer:
                             # Heuristic: if counts match, assign 1-to-1
                             if len(pos_parts) == len(lemma_parts):
                                 for p, l in zip(pos_parts, lemma_parts):
-                                    sub_morphemes.append(Morpheme(l, p, l))
+                                    sub_morphemes.append(Morph(l, p, l))
                             else:
                                 # Fallback: Treat as one block or use surface for all?
                                 # If mismatch, just store as is to avoid crash, OR
                                 # try to split surface if possible (hard without lengths).
                                 # Use lemma as surface for subs.
                                 for p in pos_parts:
-                                    sub_morphemes.append(Morpheme(lemma, p, lemma))
+                                    sub_morphemes.append(Morph(lemma, p, lemma))
 
                             # Create wrapper morpheme
-                            path[j] = Morpheme(
-                                surface, pos, lemma, sub_morphemes=sub_morphemes
+                            path[j] = Morph(
+                                surface, pos, lemma, sub_morphs=sub_morphemes
                             )
                             # For next transition, use the LAST POS of the sequence
                             prev_pos[j] = pos_parts[-1]
                         else:
-                            path[j] = Morpheme(surface, pos, lemma)
+                            path[j] = Morph(surface, pos, lemma)
                             prev_pos[j] = pos
 
             # Conjugation 시도
@@ -270,16 +254,14 @@ class Stemmer:
 
                                     if total_cost < dp[j]:
                                         dp[j] = total_cost
-                                        stem_morph = Morpheme(stem, pos, lemma)
+                                        stem_morph = Morph(stem, pos, lemma)
 
-                                        ending_morph = Morpheme(
-                                            ending, ending_pos, ending
-                                        )
-                                        path[j] = Morpheme(
+                                        ending_morph = Morph(ending, ending_pos, ending)
+                                        path[j] = Morph(
                                             surface,
                                             pos,  # VV or VA
                                             lemma,
-                                            sub_morphemes=[stem_morph, ending_morph],
+                                            sub_morphs=[stem_morph, ending_morph],
                                         )
                                         prev_pos[j] = ending_pos
                                     break
@@ -292,7 +274,7 @@ class Stemmer:
                     total_cost = dp[i] + cost
                     if total_cost < dp[j]:
                         dp[j] = total_cost
-                        path[j] = Morpheme(surface, "NNG", surface, 0.5)
+                        path[j] = Morph(surface, "NNG", surface, 0.5)
                         prev_pos[j] = "NNG"
 
         return self._backtrack(path, n)
@@ -303,8 +285,8 @@ class Stemmer:
         current = end
         while current > 0 and path[current]:
             morph = path[current]
-            if morph.sub_morphemes:
-                for sub in reversed(morph.sub_morphemes):
+            if morph.sub_morphs:
+                for sub in reversed(morph.sub_morphs):
                     result.append(sub)
             else:
                 result.append(morph)

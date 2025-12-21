@@ -41,7 +41,7 @@ You can perform various functions via the `uv run grammar` command in the termin
 ### 1. Sentence Analysis (`analyze`)
 
 ```bash
-uv run grammar analyze "Today the weather is very nice" [OPTIONS]
+uv run grammar analyze "오늘 날씨가 참 좋다" [OPTIONS]
 ```
 
 **Options:**
@@ -73,26 +73,72 @@ Measures system performance.
 uv run grammar benchmark --rust
 ```
 
-## Python API
+## Detailed API Reference
 
-How to use as a library in a Python project.
+### 1. `Morph` Object (DataClass)
+
+The individual unit of morphological analysis results.
+
+- **Attributes**:
+
+  - `surface` (str): Surface form (e.g., "갔")
+  - `pos` (str): POS tag (e.g., "VV")
+  - `lemma` (str): Lemma/Base form (e.g., "가다")
+  - `score` (float): Analysis score or cost
+  - `start`/`end` (int): Start/end position within the sentence
+  - `sub_morphs` (List[Morph]): List of sub-morphemes for composite forms
+
+- **Properties**:
+  - `is_lexical`: Whether it is a lexical (content) morpheme
+  - `is_functional`: Whether it is a functional (grammatical) morpheme
+  - `is_free`: Whether it is a free morpheme
+  - `is_bound`: Whether it is a bound morpheme
+  - `is_composite`: Whether it is a composite morpheme
+
+### 2. `MorphAnalyzer`
+
+- `analyze(text: str) -> List[Morph]`: Analyzes a sentence into morphemes.
+- `train(sentence_text, correct_morphemes)`: Performs sentence-level online learning.
+- `train_eojeol(surface, morphs)`: Force learns the analysis result for a specific eojeol (e.g., for irregular conjugations).
+
+### 3. `SyntaxAnalyzer`
+
+- `analyze(text: str = None, morphemes: List[Morph] = None, morph_analyzer=None)`:
+  - Analyzes sentence components.
+  - Return Format: `List[Tuple[word, pos_seq, SentenceComponent]]`
+- `SentenceComponent` (Enum):
+  - `SUBJECT`, `OBJECT`, `PREDICATE`, `ADVERBIAL`, `DETERMINER`, `COMPLEMENT`, `INDEPENDENT`
+
+### 4. Utility Functions
+
+Used to classify `Morph` objects without needing an analyzer instance.
+
+- `is_lexical_morph(morph)`
+- `is_functional_morph(morph) `
+- `is_free_morph(morph)`
+- `is_bound_morph(morph)`
+
+## Usage Examples
 
 ```python
-from grammar import MorphAnalyzer
+from grammar import MorphAnalyzer, SyntaxAnalyzer
 
-# Initialize Analyzer (Set options)
-analyzer = MorphAnalyzer(
-    use_rust=True,
-    use_gpu=False,
-    use_neural=True
-)
+# 1. Initialization
+analyzer = MorphAnalyzer(use_rust=True)
+syntax = SyntaxAnalyzer()
 
-# Execute Analysis
-result = analyzer.analyze("Father goes into the room.")
+# 2. Morphological Analysis
+morphs = analyzer.analyze("어제는 날씨가 좋았다.")
 
-# Use Result
-for word, pos in result:
-    print(f"{word}/{pos}")
+# 3. Property Classification
+for m in morphs:
+    if m.is_lexical:
+        print(f"Content meaning: {m.surface}")
+
+# 4. Syntax Analysis
+results = syntax.analyze(text="친구가 밥을 먹는다.", morph_analyzer=analyzer)
+for word, pos, comp in results:
+    print(f"{word} -> {comp.name}")
 ```
 
 ## Rust Module Info

@@ -1,19 +1,9 @@
-
 import numpy as np
 from typing import List, Tuple, Dict, Optional
 from dataclasses import dataclass
 
 
-@dataclass
-class Morpheme:
-    """형태소 정보"""
-
-    surface: str  # 표면형
-    pos: str  # 품사
-    lemma: str  # 기본형
-    start: int  # 시작 위치
-    end: int  # 끝 위치
-    cost: float  # 비용
+from .morph import Morph
 
 
 class DPMorphemeAnalyzer:
@@ -55,7 +45,7 @@ class DPMorphemeAnalyzer:
             "compound": -5.0,  # 복합어 보너스
         }
 
-    def analyze(self, text: str, top_k: int = 1) -> List[List[Morpheme]]:
+    def analyze(self, text: str, top_k: int = 1) -> List[List[Morph]]:
         """
         DP로 형태소 분석
 
@@ -106,13 +96,13 @@ class DPMorphemeAnalyzer:
 
                         if total_cost < dp[j]:
                             dp[j] = total_cost
-                            path[j] = Morpheme(
+                            path[j] = Morph(
                                 surface=surface,
                                 pos=pos,
                                 lemma=lemma,
                                 start=i,
                                 end=j,
-                                cost=cost,
+                                score=cost,
                             )
                 else:
                     # 미등록어 처리
@@ -121,13 +111,13 @@ class DPMorphemeAnalyzer:
 
                     if total_cost < dp[j]:
                         dp[j] = total_cost
-                        path[j] = Morpheme(
+                        path[j] = Morph(
                             surface=surface,
                             pos=self._guess_pos(surface),
                             lemma=surface,
                             start=i,
                             end=j,
-                            cost=cost,
+                            score=cost,
                         )
 
         # 역추적
@@ -275,7 +265,7 @@ class DPMorphemeAnalyzer:
 
         return None
 
-    def _backtrack(self, path: List, end: int) -> List[Morpheme]:
+    def _backtrack(self, path: List, end: int) -> List[Morph]:
         """경로 역추적"""
         result = []
         current = end
@@ -291,15 +281,15 @@ class DPMorphemeAnalyzer:
         result.reverse()
         return result
 
-    def get_cost_breakdown(self, morphemes: List[Morpheme]) -> Dict:
+    def get_cost_breakdown(self, morphemes: List[Morph]) -> Dict:
         """비용 분석"""
-        total_cost = sum(m.cost for m in morphemes)
+        total_cost = sum(m.score for m in morphemes)
 
         return {
             "total_cost": total_cost,
             "avg_cost_per_morpheme": total_cost / len(morphemes) if morphemes else 0,
             "morpheme_count": len(morphemes),
-            "morphemes": [(m.surface, m.pos, m.cost) for m in morphemes],
+            "morphemes": [(m.surface, m.pos, m.score) for m in morphemes],
         }
 
 

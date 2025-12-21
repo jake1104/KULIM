@@ -24,6 +24,13 @@ from .analyzer import MorphAnalyzer
 from .stemmer import Stemmer
 from .conjugation import ConjugationAnalyzer
 from .irregular import IrregularConjugation
+from .morph import (
+    Morph,
+    is_lexical_morph,
+    is_functional_morph,
+    is_free_morph,
+    is_bound_morph,
+)
 from .syntax import SyntaxAnalyzer, SentenceComponent
 
 
@@ -37,6 +44,11 @@ __all__ = [
     "HMMTrainer",
     # 3. 형태소 분석기
     "MorphAnalyzer",
+    "Morph",
+    "is_lexical_morph",
+    "is_functional_morph",
+    "is_free_morph",
+    "is_bound_morph",
     # 추가 유틸리티
     "Stemmer",
     "ConjugationAnalyzer",

@@ -1,7 +1,8 @@
 from typing import List, Tuple, Dict
 import os
 
-from .stemmer import Stemmer, Morpheme
+from .stemmer import Stemmer
+from .morph import Morph
 from .dictionary import build_comprehensive_trie
 from .preprocessor import Preprocessor
 from .utils import get_data_dir, get_version
@@ -119,7 +120,7 @@ class MorphAnalyzer:
             except Exception as e:
                 print(f"  ⚠ 사전 저장 실패: {e}")
 
-    def analyze(self, text: str) -> List[Tuple[str, str]]:
+    def analyze(self, text: str) -> List[Morph]:
         """형태소 분석 (v02 호환)
 
         띄어쓰기가 있으면 각 어절을 독립적으로 분석
@@ -266,7 +267,8 @@ class MorphAnalyzer:
                         res = refined_res
 
                 morphemes.extend(res)
-            return morphemes
+            # Reconstruct Morph objects from neural results (which are tuples)
+            return [Morph(w, p, w) for w, p in morphemes]
 
         # 공백으로 어절 분리
         eojeols = text.split()
@@ -281,15 +283,14 @@ class MorphAnalyzer:
             results = self.stemmer.analyze(eojeol)
             # results는 List[List[Morpheme]]
             for sent_morphs in results:
-                for morph in sent_morphs:
-                    morphemes.append((morph.surface, morph.pos))
+                morphemes.extend(sent_morphs)
 
         return morphemes
 
     def train(
         self,
         sentence_text: str,
-        correct_morphemes: List[Tuple[str, str]],
+        correct_morphemes: List[Morph],
         save: bool = True,
     ):
         """
@@ -297,9 +298,17 @@ class MorphAnalyzer:
 
         Args:
             sentence_text: 문장 텍스트 (예: "오늘 날씨가 좋다")
-            correct_morphemes: 올바른 형태소 분석 결과 (예: [("오늘", "NNG"), ("날씨", "NNG"), ...])
+            correct_morphemes: 올바른 형태소 분석 결과
             save: 학습 후 모델 자동 저장 여부
         """
+        # Convert to tuples for neural wrapper if needed, or vice-versa
+        tuple_morphemes = []
+        for m in correct_morphemes:
+            if isinstance(m, Morph):
+                tuple_morphemes.append((m.surface, m.pos))
+            else:
+                tuple_morphemes.append(m)
+
         if not self.use_neural:
             # Rule-based only: just add to Dictionary
             pass
@@ -307,41 +316,40 @@ class MorphAnalyzer:
         # 1. Neural Model 업데이트 (Online Learning)
         if self.use_neural and self.neural_wrapper:
             loss = self.neural_wrapper.online_train_morph(
-                sentence_text, correct_morphemes
+                sentence_text, tuple_morphemes
             )
             if loss > 0:
                 print(f"  [v] Neural 학습 완료 (Loss: {loss:.4f})")
 
-                if save:
-                    # todo: Implement save in NeuralWrapper
-                    pass
-
         # 2. 미등록 단어(OOV) Dictionary에 추가 (메모리 상)
-        # HMM은 이미 emission 확률을 1.0으로 업데이트했음.
-        # Trie에도 추가해야 검색이 됨.
-        for word, pos in correct_morphemes:
+        for word, pos in tuple_morphemes:
             self.trie.insert(word, pos, word)
 
-    def train_eojeol(self, surface: str, morphs: List[Tuple[str, str]]):
+    def train_eojeol(self, surface: str, morphs: List[Morph]):
         """
         어절 단위 학습 (불규칙 활용 학습용)
         Args:
             surface: 어절 표면형 (e.g. "갔다")
-            morphs: 형태소 목록 (e.g. [("가", "VV"), ("았", "EP"), ("다", "EF")])
+            morphs: 형태소 목록
         """
+        tuple_morphs = []
+        for m in morphs:
+            if isinstance(m, Morph):
+                tuple_morphs.append((m.surface, m.pos))
+            else:
+                tuple_morphs.append(m)
+
         # 1. Individual Morphemes (Always insert for vocabulary coverage)
-        for word, pos in morphs:
+        for word, pos in tuple_morphs:
             self.trie.insert(word, pos, word)
 
         # 2. Irregular Pattern Detection
-        reconstructed = "".join(w for w, p in morphs)
+        reconstructed = "".join(w for w, p in tuple_morphs)
 
         if surface != reconstructed:
             # Mismatch detected (Contraction/Irregular)
-            # Insert composite pattern: "갔다" -> POS="VV+EP+EF", Lemma="가+았+다"
-
-            compound_pos = "+".join(p for w, p in morphs)
-            compound_lemma = "+".join(w for w, p in morphs)
+            compound_pos = "+".join(p for w, p in tuple_morphs)
+            compound_lemma = "+".join(w for w, p in tuple_morphs)
 
             self.trie.insert(surface, compound_pos, compound_lemma)
 
