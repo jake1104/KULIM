@@ -1,7 +1,7 @@
 
 [project]
 name = "kulim-workspace"
-version = "0.1.0rc8"
+version = "0.1.0rc9"
 requires-python = ">=3.12"
 
 [tool.uv.workspace]

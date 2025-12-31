@@ -43,7 +43,7 @@ wheels = [
 
 [[package]]
 name = "kulim"
-version = "0.1.0rc8"
+version = "0.1.0rc9"
 source = { virtual = "." }
 dependencies = [
     { name = "hangul" },

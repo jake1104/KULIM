@@ -76,7 +76,7 @@ wheels = [
 
 [[package]]
 name = "grammar"
-version = "0.1.0rc8"
+version = "0.1.0rc9"
 source = { editable = "grammar" }
 dependencies = [
     { name = "hangul" },
@@ -126,7 +126,7 @@ wheels = [
 
 [[package]]
 name = "kulim"
-version = "0.1.0rc8"
+version = "0.1.0rc9"
 source = { editable = "kulim" }
 dependencies = [
     { name = "grammar" },
@@ -145,7 +145,7 @@ requires-dist = [
 
 [[package]]
 name = "kulim-workspace"
-version = "0.1.0rc8"
+version = "0.1.0rc9"
 source = { virtual = "." }
 
 [package.dev-dependencies]
