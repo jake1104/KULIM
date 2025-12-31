@@ -7,7 +7,7 @@ packages = []
 
 [project]
 name = "kulim"
-version = "0.1.0-rc.2"
+version = "0.1.0-rc.3"
 description = "Korean Unified Linguistic Integration Manager"
 authors = [
     { name = "jake1104", email = "iamjake1104@gmail.com" }
