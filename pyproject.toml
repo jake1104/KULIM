@@ -18,6 +18,7 @@ dependencies = [
     "hangul",
     "numpy>=2.3.5",
     "torch>=2.7,<2.9"
+    "lazy-import>=0.2.6"
 ]
 
 [[tool.uv.index]]
