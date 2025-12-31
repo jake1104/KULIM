@@ -2,16 +2,10 @@ from typing import List, Tuple, Optional
 from dataclasses import dataclass
 import math
 
-try:
-    from .conjugation import ConjugationAnalyzer
-    from .irregular import IrregularConjugation
-    from .constraints import ConstraintValidator
-    from .scorers import SCORING
-except ImportError:
-    from conjugation import ConjugationAnalyzer
-    from irregular import IrregularConjugation
-    from constraints import ConstraintValidator
-    from scorers import SCORING
+from .conjugation import ConjugationAnalyzer
+from .irregular import IrregularConjugation
+from .constraints import ConstraintValidator
+from .scorers import SCORING
 
 
 from .morph import Morph

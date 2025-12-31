@@ -1,11 +1,7 @@
 
 from typing import List, Tuple, Optional
 
-try:
-    from .irregular import IrregularConjugation
-except ImportError:
-    from irregular import IrregularConjugation
-
+from .irregular import IrregularConjugation
 from hangul import compose, decompose
 
 class ConjugationAnalyzer:
