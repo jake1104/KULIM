@@ -1,14 +1,19 @@
 
 [project]
 name = "kulim"
-version = "0.1.0-rc.8"
+version = "0.1.0rc8"
 description = "Korean Unified Linguistic Integration Manager"
 authors = [
     { name = "jake1104", email = "iamjake1104@gmail.com" }
 ]
+requires-python = ">=3.12"
 dependencies = [
     "grammar==0.1.0rc8",
     "hangul==0.0.1",
     "numpy>=2.3.5",
-    "torch>=2.7,<2.9"
+    "torch>=2.8,<2.9"
 ]
+
+[[tool.uv.index]]
+name = "torch"
+url = "https://download.pytorch.org/whl/cu129"
