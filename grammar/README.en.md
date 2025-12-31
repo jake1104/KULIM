@@ -2,7 +2,7 @@
 
 > **Read in other languages**: [한국어](README.md)
 
-⚠️ **Experimental Version (v0.1.0-rc.5)**
+⚠️ **Experimental Version (v0.1.0-rc.6)**
 
 This project is an early-stage analyzer for Korean morphological analysis and syntax parsing.
 Accuracy is not guaranteed, and the API and output format are subject to change without notice.
