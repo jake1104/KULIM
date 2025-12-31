@@ -106,7 +106,7 @@ print(has_jongsung("강")) # True
 
 ## 버전 정보
 
-### v0.1.0-rc.8 (Grammar), v0.0.1 (Hangul) (2026.1.1)
+### v0.1.0-rc.9 (Grammar), v0.0.1 (Hangul) (2026.1.1)
 
 - **실험적 릴리즈**
 - 하이브리드 형태소 분석기 및 Rust 가속 엔진 탑재

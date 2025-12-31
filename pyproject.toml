@@ -1,13 +1,20 @@
 
+[project]
+name = "kulim-workspace"
+version = "0.1.0rc9"
+requires-python = ">=3.12"
+
 [tool.uv.workspace]
 members = [
     "grammar",
-    "hangul"
+    "hangul",
+    "kulim"
 ]
 
 [tool.uv.sources]
 grammar = { workspace = true }
 hangul  = { workspace = true }
+kulim = { workspace = true }
 
 [dependency-groups]
 dev = [

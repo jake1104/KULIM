@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "grammar"
-version = "0.1.0-rc.6"
+version = "0.1.0rc9"
 description = "KULIM Grammar"
 license = { text = "CC BY-SA 4.0" }
 authors = [
@@ -13,8 +13,12 @@ authors = [
 dependencies = [
     "maturin>=1.10.2,<2.0.0",
     "hangul>=0.0.1,<1.0.0",
-    "torch==2.8.0+cu129",
+    "torch>=2.8,<2.9",
 ]
+
+[[tool.uv.index]]
+name = "torch"
+url = "https://download.pytorch.org/whl/cu129"
 
 [project.optional-dependencies]
 gpu = ["cupy-cuda12x>=13.6.0,<14.0.0"]
