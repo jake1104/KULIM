@@ -17,7 +17,7 @@ dependencies = [
     "grammar",
     "hangul",
     "numpy>=2.3.5",
-    "torch==2.8.0+cu129",
+    "torch>=2.7,<2.9"
 ]
 
 [[tool.uv.index]]
