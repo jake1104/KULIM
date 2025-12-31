@@ -106,7 +106,7 @@ print(has_jongsung("강")) # True
 
 ## Version Info
 
-### v0.1.0-rc.6 (Grammar), v0.0.1 (Hangul) (Jan 1, 2026)
+### v0.1.0-rc.7 (Grammar), v0.0.1 (Hangul) (Jan 1, 2026)
 
 - **Experimental Release**
 - Hybrid Morphological Analyzer and Rust Acceleration Engine included
