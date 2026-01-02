@@ -9,17 +9,12 @@ jobs:
   wheels:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        python: ["3.13"]
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Build manylinux wheels
         uses: PyO3/maturin-action@v1
         with:
-          python-version: ${{ matrix.python }}
           manylinux: "2014"
           args: --release --strip
           working-directory: grammar
@@ -27,5 +22,5 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.python }}
-          path: grammar/target/wheels/*.whl
+          name: wheels
+          path: target/wheels/*.whl
