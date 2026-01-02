@@ -1,4 +1,4 @@
-name: build wheels
+name: build all wheels
 
 on:
   push:
@@ -6,21 +6,62 @@ on:
       - "v*"
 
 jobs:
-  wheels:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build manylinux wheels
+      # 공용 dist 디렉토리
+      - name: Prepare dist directory
+        run: mkdir -p dist
+
+      # =========================
+      # grammar (Rust / manylinux)
+      # =========================
+      - name: Build grammar (manylinux)
         uses: PyO3/maturin-action@v1
         with:
           manylinux: "2014"
           args: --release --strip
           working-directory: grammar
 
-      - name: Upload wheels
+      - name: Collect grammar wheels
+        run: |
+          cp grammar/target/wheels/*.whl dist/
+
+      # =========================
+      # hangul (pure python)
+      # =========================
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v1
+
+      - name: Build hangul
+        run: |
+          cd hangul
+          uv build
+
+      - name: Collect hangul wheels
+        run: |
+          cp hangul/dist/* dist/
+
+      # =========================
+      # kulim (pure python)
+      # =========================
+      - name: Build kulim
+        run: |
+          cd kulim
+          uv build
+
+      - name: Collect kulim wheels
+        run: |
+          cp kulim/dist/* dist/
+
+      # =========================
+      # Upload all
+      # =========================
+      - name: Upload all wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels
-          path: target/wheels/*.whl
+          name: kulim-dist
+          path: dist/*
