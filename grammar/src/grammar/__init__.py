@@ -9,7 +9,7 @@ from importlib.metadata import version, PackageNotFoundError
 try:
     __version__ = version("grammar")
 except PackageNotFoundError:
-    __version__ = "0.0.0-dev"
+    __version__ = "0.1.0rc9"
 
 # 1. 사전 구축 (Dictionary Builder)
 from .dictionary import build_comprehensive_trie
