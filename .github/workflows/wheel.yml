@@ -29,6 +29,9 @@ jobs:
       - name: Prepare dist
         run: mkdir -p dist
 
+      # ---------------------------
+      # grammar (Rust + PyO3)
+      # ---------------------------
       - name: Build grammar (manylinux)
         uses: PyO3/maturin-action@v1
         with:
@@ -37,18 +40,35 @@ jobs:
           args: --release --strip --out ../dist
           working-directory: grammar
 
+      - name: Rename grammar wheel with python version
+        run: |
+          PYTAG=cp$(echo "${{ matrix.python }}" | tr -d .)
+          for f in dist/grammar-*.whl; do
+            base=$(basename "$f")
+            mv "$f" "dist/${base%.whl}-${PYTAG}.whl"
+          done
+
+      # ---------------------------
+      # hangul (uv)
+      # ---------------------------
       - name: Build hangul
         run: |
           cd hangul
           pip install -U uv
           uv build --out-dir ../dist
 
+      # ---------------------------
+      # kulim (uv)
+      # ---------------------------
       - name: Build kulim
         run: |
           cd kulim
           pip install -U uv
           uv build --out-dir ../dist
 
+      # ---------------------------
+      # Upload per-python artifacts
+      # ---------------------------
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -60,7 +80,8 @@ jobs:
     needs: build
 
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
         with:
           path: dist
 
@@ -73,4 +94,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: final/*
-          generate_release_notes: true
+          generate_release_notes: false
