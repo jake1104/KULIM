@@ -1,3 +1,4 @@
+
 [build-system]
 requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
@@ -33,3 +34,4 @@ hangul = { workspace = true }
 manifest-path = "rust/Cargo.toml"
 python-source = "src"
 module-name = "grammar.kulim_rust"
+bindings = "pyo3"
