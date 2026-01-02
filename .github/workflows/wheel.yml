@@ -1,12 +1,15 @@
-name: build all packages
+name: build & release
 
 on:
   push:
     tags:
       - "v*"
 
+permissions:
+  contents: write   # ⭐ release 생성에 필수
+
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,36 +24,35 @@ jobs:
       - name: Install uv
         run: pip install -U uv
 
-      - name: Prepare dist directory
+      - name: Prepare dist
         run: mkdir -p dist
 
       # ---------- grammar (Rust + maturin, manylinux) ----------
-      - name: Build grammar wheels (manylinux)
+      - name: Build grammar wheels
         uses: PyO3/maturin-action@v1
         with:
           manylinux: "2014"
           args: --release --strip --out ../dist
           working-directory: grammar
 
-      # ---------- hangul (pure python) ----------
+      # ---------- hangul ----------
       - name: Build hangul
         run: |
           cd hangul
           uv build --out-dir ../dist
 
-      # ---------- kulim (pure python) ----------
+      # ---------- kulim ----------
       - name: Build kulim
         run: |
           cd kulim
           uv build --out-dir ../dist
 
-      # ---------- 결과 확인 ----------
-      - name: List dist
+      - name: Show dist
         run: ls -lh dist
 
-      # ---------- 업로드 ----------
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      # ---------- GitHub Release ----------
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: dist
-          path: dist/*
+          files: dist/*
+          generate_release_notes: true
