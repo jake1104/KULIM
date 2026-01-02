@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
 
     strategy:
@@ -29,8 +29,7 @@ jobs:
       - name: Prepare dist
         run: mkdir -p dist
 
-      # ---------- grammar (Rust / manylinux) ----------
-      - name: Build grammar wheels
+      - name: Build grammar (manylinux)
         uses: PyO3/maturin-action@v1
         with:
           python-version: ${{ matrix.python }}
@@ -38,26 +37,40 @@ jobs:
           args: --release --strip --out ../dist
           working-directory: grammar
 
-      # ---------- hangul ----------
       - name: Build hangul
         run: |
           cd hangul
           pip install -U uv
           uv build --out-dir ../dist
 
-      # ---------- kulim ----------
       - name: Build kulim
         run: |
           cd kulim
           pip install -U uv
           uv build --out-dir ../dist
 
-      - name: Show dist
-        run: ls -lh dist
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.python }}
+          path: dist/*
 
-      # ---------- GitHub Release ----------
-      - name: Upload to GitHub Release
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Flatten artifacts
+        run: |
+          mkdir final
+          find dist -type f -exec cp {} final/ \;
+
+      - name: Upload GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*
-          generate_release_notes: false
+          files: final/*
+          generate_release_notes: true
