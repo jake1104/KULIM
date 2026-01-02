@@ -40,7 +40,7 @@ jobs:
             -i /opt/python/cp311-cp311/bin/python
             -i /opt/python/cp312-cp312/bin/python
             -i /opt/python/cp313-cp313/bin/python
-            --out ../dist
+            --out ../dist/${{ matrix.python }}
           working-directory: grammar
 
       # ---------------------------
