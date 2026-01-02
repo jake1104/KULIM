@@ -6,31 +6,34 @@ on:
       - "v*"
 
 permissions:
-  contents: write   # ⭐ release 생성에 필수
+  contents: write
 
 jobs:
   release:
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        python:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+
     steps:
       - uses: actions/checkout@v4
-
-      # ---------- Python / uv ----------
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install uv
-        run: pip install -U uv
 
       - name: Prepare dist
         run: mkdir -p dist
 
-      # ---------- grammar (Rust + maturin, manylinux) ----------
+      # ---------- grammar (Rust / manylinux) ----------
       - name: Build grammar wheels
         uses: PyO3/maturin-action@v1
         with:
+          python-version: ${{ matrix.python }}
           manylinux: "2014"
           args: --release --strip --out ../dist
           working-directory: grammar
@@ -39,19 +42,21 @@ jobs:
       - name: Build hangul
         run: |
           cd hangul
+          pip install -U uv
           uv build --out-dir ../dist
 
       # ---------- kulim ----------
       - name: Build kulim
         run: |
           cd kulim
+          pip install -U uv
           uv build --out-dir ../dist
 
       - name: Show dist
         run: ls -lh dist
 
       # ---------- GitHub Release ----------
-      - name: Create GitHub Release
+      - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
