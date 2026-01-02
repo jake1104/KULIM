@@ -1,4 +1,4 @@
-name: build all wheels
+name: build all packages
 
 on:
   push:
@@ -12,56 +12,45 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 공용 dist 디렉토리
+      # ---------- Python / uv ----------
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        run: pip install -U uv
+
       - name: Prepare dist directory
         run: mkdir -p dist
 
-      # =========================
-      # grammar (Rust / manylinux)
-      # =========================
-      - name: Build grammar (manylinux)
+      # ---------- grammar (Rust + maturin, manylinux) ----------
+      - name: Build grammar wheels (manylinux)
         uses: PyO3/maturin-action@v1
         with:
           manylinux: "2014"
-          args: --release --strip
+          args: --release --strip --out ../dist
           working-directory: grammar
 
-      - name: Collect grammar wheels
-        run: |
-          cp grammar/target/wheels/*.whl dist/
-
-      # =========================
-      # hangul (pure python)
-      # =========================
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v1
-
+      # ---------- hangul (pure python) ----------
       - name: Build hangul
         run: |
           cd hangul
-          uv build
+          uv build --out-dir ../dist
 
-      - name: Collect hangul wheels
-        run: |
-          cp hangul/dist/* dist/
-
-      # =========================
-      # kulim (pure python)
-      # =========================
+      # ---------- kulim (pure python) ----------
       - name: Build kulim
         run: |
           cd kulim
-          uv build
+          uv build --out-dir ../dist
 
-      - name: Collect kulim wheels
-        run: |
-          cp kulim/dist/* dist/
+      # ---------- 결과 확인 ----------
+      - name: List dist
+        run: ls -lh dist
 
-      # =========================
-      # Upload all
-      # =========================
-      - name: Upload all wheels
+      # ---------- 업로드 ----------
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: kulim-dist
+          name: dist
           path: dist/*
