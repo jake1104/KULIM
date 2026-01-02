@@ -1,6 +1,7 @@
 [project]
 name = "hangul"
 version = "0.0.1"
+requires-python = ">=3.11,<4.0"
 description = "KULIM Hangul"
 license = { text = "CC BY-SA 4.0" }
 authors = [

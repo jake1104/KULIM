@@ -6,7 +6,7 @@ description = "Korean Unified Linguistic Integration Manager"
 authors = [
     { name = "jake1104", email = "iamjake1104@gmail.com" }
 ]
-requires-python = ">=3.8,<4.0"
+requires-python = ">=3.11,<4.0"
 dependencies = [
     "grammar==0.1.0rc9",
     "hangul==0.0.1",
