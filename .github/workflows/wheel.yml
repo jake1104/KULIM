@@ -40,14 +40,6 @@ jobs:
           args: --release --strip --out ../dist
           working-directory: grammar
 
-      - name: Rename grammar wheel with python version
-        run: |
-          PYTAG=cp$(echo "${{ matrix.python }}" | tr -d .)
-          for f in dist/grammar-*.whl; do
-            base=$(basename "$f")
-            mv "$f" "dist/${base%.whl}-${PYTAG}.whl"
-          done
-
       # ---------------------------
       # hangul (uv)
       # ---------------------------
