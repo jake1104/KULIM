@@ -8,7 +8,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/version-0.1.0-blue" alt="Version 0.1.0">
-  <img src="https://img.shields.io/badge/python-3.12+-blue?logo=python" alt="Python 3.12+">
+  <img src="https://img.shields.io/badge/python-3.8+-blue?logo=python" alt="Python 3.8+">
   <img src="https://img.shields.io/badge/rust-accelerated-orange?logo=rust" alt="Rust Accelerated">
   <img src="https://img.shields.io/badge/license-MIT-green?logo=github" alt="MIT License">
 </p>
