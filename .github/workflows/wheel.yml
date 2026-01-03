@@ -107,31 +107,10 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: dist-${{ matrix.python }}-${{ matrix.os }}
-
-      - name: Flatten artifacts (manylinux)
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: |
-          mkdir final
-          find dist-${{ matrix.python }}-${{ matrix.os }} -type f -exec cp {} final/ \;
-
-      - name: Flatten artifacts (windows)
-        if: ${{ matrix.os == 'windows-latest' }}
-        shell: pwsh
-        run: |
-          mkdir final
-          Get-ChildItem -Recurse -File -Path dist | ForEach-Object {
-              Copy-Item $_.FullName -Destination final
-          }
-
-      - name: Flatten artifacts (macos)
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          mkdir final
-          find dist-${{ matrix.python }}-${{ matrix.os }} -type f -exec cp {} final/ \;
+          path: dist
 
       - name: Upload GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: final/*
+          files: dist/*
           generate_release_notes: false
