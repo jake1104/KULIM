@@ -102,6 +102,8 @@ jobs:
           - "ubuntu-latest"
           - "windows-latest"
           - "macos-latest"
+        python:
+          - "3.11"
 
     steps:
       - name: Download artifacts
@@ -109,8 +111,29 @@ jobs:
         with:
           path: dist
 
+      - name: Flatten artifacts (manylinux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          mkdir final
+          find dist/${{ matrix.python }}-${{ matrix.os }} -type f -exec cp {} final/ \;
+
+      - name: Flatten artifacts (windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: |
+          mkdir final
+          Get-ChildItem -Recurse -File -Path dist/${{ matrix.python }}-${{ matrix.os }} | ForEach-Object {
+              Copy-Item $_.FullName -Destination final
+          }
+
+      - name: Flatten artifacts (macos)
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          mkdir final
+          find dist/${{ matrix.python }}-${{ matrix.os }} -type f -exec cp {} final/ \;
+
       - name: Upload GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*
+          files: final/*
           generate_release_notes: false
