@@ -36,7 +36,7 @@ jobs:
       - name: Build grammar (manylinux)
         uses: PyO3/maturin-action@v1
         with:
-          manylinux: "2014"
+          manylinux: "2014_x86_64"
           args: >
             build --release --strip --out ../dist/${{ matrix.python }}
           working-directory: grammar
