@@ -11,7 +11,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
       matrix:
@@ -23,6 +22,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+
       - name: Prepare dist
         run: mkdir -p dist/${{ matrix.python }}
 
@@ -32,15 +36,9 @@ jobs:
       - name: Build grammar (manylinux)
         uses: PyO3/maturin-action@v1
         with:
-          python-version: ${{ matrix.python }}
           manylinux: "2014"
           args: >
-            --release
-            --strip
-            -i /opt/python/cp311-cp311/bin/python
-            -i /opt/python/cp312-cp312/bin/python
-            -i /opt/python/cp313-cp313/bin/python
-            --out ../dist/${{ matrix.python }}
+            build --release --strip --out ../dist/${{ matrix.python }}
           working-directory: grammar
 
       # ---------------------------
@@ -49,8 +47,8 @@ jobs:
       - name: Build hangul
         run: |
           cd hangul
-          pip install -U uv
-          uv build --out-dir ../dist/${{ matrix.python }}
+          python -m pip install -U uv
+          python -m uv build --out-dir ../dist/${{ matrix.python }}
 
       # ---------------------------
       # kulim (uv)
@@ -58,8 +56,8 @@ jobs:
       - name: Build kulim
         run: |
           cd kulim
-          pip install -U uv
-          uv build --out-dir ../dist/${{ matrix.python }}
+          python -m pip install -U uv
+          python -m uv build --out-dir ../dist/${{ matrix.python }}
 
       # ---------------------------
       # Upload per-python artifacts
