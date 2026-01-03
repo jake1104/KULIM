@@ -26,7 +26,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Prepare dist
-        run: mkdir -p dist/${{ matrix.python }}
+        run: |
+          mkdir -p dist/${{ matrix.python }}-${{ matrix.os }}
+          chmod -R 777 dist/${{ matrix.python }}-${{ matrix.os }}
 
       # ---------------------------
       # grammar (Rust + PyO3)
