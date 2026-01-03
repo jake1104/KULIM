@@ -111,18 +111,18 @@ jobs:
 
       - name: Flatten artifacts (manylinux)
         if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          mkdir final
+          find dist-${{ matrix.python }}-${{ matrix.os }} -type f -exec cp {} final/ \;
+
+      - name: Flatten artifacts (windows)
+        if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
         run: |
           mkdir final
           Get-ChildItem -Recurse -File -Path dist | ForEach-Object {
               Copy-Item $_.FullName -Destination final
           }
-
-      - name: Flatten artifacts (windows)
-        if: ${{ matrix.os == 'windows-latest' }}
-        run: |
-          mkdir final
-          find dist-${{ matrix.python }}-${{ matrix.os }} -type f -exec cp {} final/ \;
 
       - name: Flatten artifacts (macos)
         if: ${{ matrix.os == 'macos-latest' }}
