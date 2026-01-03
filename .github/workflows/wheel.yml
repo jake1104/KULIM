@@ -115,14 +115,14 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           mkdir final
-          find dist-${{ matrix.python }}-${{ matrix.os }} -type f -exec cp {} final/ \;
+          find dist -type f -exec cp {} final/ \;
 
       - name: Flatten artifacts (windows)
         if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
         run: |
           mkdir final
-          Get-ChildItem -Recurse -File -Path dist/${{ matrix.python }}-${{ matrix.os }} | ForEach-Object {
+          Get-ChildItem -Recurse -File -Path dist | ForEach-Object {
               Copy-Item $_.FullName -Destination final
           }
 
@@ -130,7 +130,7 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
           mkdir final
-          find dist-${{ matrix.python }}-${{ matrix.os }} -type f -exec cp {} final/ \;
+          find dist -type f -exec cp {} final/ \;
 
       - name: Upload GitHub Release
         uses: softprops/action-gh-release@v2
