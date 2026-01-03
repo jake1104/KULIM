@@ -15,50 +15,53 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python:
-          - "3.11"
-          - "3.12"
-          - "3.13"
+        python: [ "3.11", "3.12", "3.13" ]
 
     steps:
       - uses: actions/checkout@v4
+
+      # ---------------------------
+      # Setup Python
+      # ---------------------------
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Upgrade pip and install maturin
+        run: |
+          python -m pip install --upgrade pip
+          pip install maturin uv
 
       - name: Prepare dist
         run: mkdir -p dist/${{ matrix.python }}
 
       # ---------------------------
-      # grammar (Rust + PyO3)
+      # Build grammar (Rust + PyO3)
       # ---------------------------
       - name: Build grammar (manylinux)
-        uses: PyO3/maturin-action@v1
-        with:
-          python-version: ${{ matrix.python }}
-          manylinux: "2014"
-          args: >
-            --release
-            --strip
-            -i /opt/python/cp311-cp311/bin/python
-            -i /opt/python/cp312-cp312/bin/python
-            -i /opt/python/cp313-cp313/bin/python
+        run: |
+          cd grammar
+          maturin build \
+            --release \
+            --strip \
+            --manylinux 2014 \
             --out ../dist/${{ matrix.python }}
-          working-directory: grammar
 
       # ---------------------------
-      # hangul (uv)
+      # Build hangul (uv)
       # ---------------------------
       - name: Build hangul
         run: |
           cd hangul
-          pip install -U uv
           uv build --out-dir ../dist/${{ matrix.python }}
 
       # ---------------------------
-      # kulim (uv)
+      # Build kulim (uv)
       # ---------------------------
       - name: Build kulim
         run: |
           cd kulim
-          pip install -U uv
           uv build --out-dir ../dist/${{ matrix.python }}
 
       # ---------------------------
