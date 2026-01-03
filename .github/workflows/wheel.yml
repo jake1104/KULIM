@@ -10,15 +10,17 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
+        os:
+          - "ubuntu-latest"
+          - "windows-latest"
+          - "macos-latest"
         python:
           - "3.11"
-          - "3.12"
-          - "3.13"
 
     steps:
       - uses: actions/checkout@v4
@@ -30,18 +32,30 @@ jobs:
       # grammar (Rust + PyO3)
       # ---------------------------
       - name: Build grammar (manylinux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: PyO3/maturin-action@v1
         with:
-          python-version: ${{ matrix.python }}
           manylinux: "2014"
           args: >
             --release
             --strip
             -i /opt/python/cp311-cp311/bin/python
-            -i /opt/python/cp312-cp312/bin/python
-            -i /opt/python/cp313-cp313/bin/python
-            --out ../dist/${{ matrix.python }}
+            --out ../dist/${{ matrix.python }}-${{ matrix.os }}
           working-directory: grammar
+
+      - name: Build grammar (windows)
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          cd grammar
+          pip install -U maturin
+          maturin build --release --strip --out-dir ../dist/${{ matrix.python }}-${{ matrix.os }}
+
+      - name: Build grammar (macos)
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          cd grammar
+          pip install -U maturin
+          maturin build --release --strip --out-dir ../dist/${{ matrix.python }}-${{ matrix.os }}
 
       # ---------------------------
       # hangul (uv)
