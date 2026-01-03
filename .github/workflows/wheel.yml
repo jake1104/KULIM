@@ -29,6 +29,11 @@ jobs:
         run: |
           mkdir -p dist/${{ matrix.python }}-${{ matrix.os }}
           chmod -R 777 dist/${{ matrix.python }}-${{ matrix.os }}
+      
+      - name: Prepare Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
 
       # ---------------------------
       # grammar (Rust + PyO3)
