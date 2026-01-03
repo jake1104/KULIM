@@ -64,7 +64,7 @@ jobs:
         run: |
           cd hangul
           pip install -U uv
-          uv build --out-dir ../dist/${{ matrix.python }}
+          uv build --out-dir ../dist/${{ matrix.python }}-${{ matrix.os }}
 
       # ---------------------------
       # kulim (uv)
@@ -73,7 +73,7 @@ jobs:
         run: |
           cd kulim
           pip install -U uv
-          uv build --out-dir ../dist/${{ matrix.python }}
+          uv build --out-dir ../dist/${{ matrix.python }}-${{ matrix.os }}
 
       # ---------------------------
       # Upload per-python artifacts
