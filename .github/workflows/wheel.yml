@@ -48,14 +48,14 @@ jobs:
         run: |
           cd grammar
           pip install -U maturin
-          maturin build --release --strip --out-dir ../dist/${{ matrix.python }}-${{ matrix.os }}
+          maturin build --release --strip --out ../dist/${{ matrix.python }}-${{ matrix.os }}
 
       - name: Build grammar (macos)
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
           cd grammar
           pip install -U maturin
-          maturin build --release --strip --out-dir ../dist/${{ matrix.python }}-${{ matrix.os }}
+          maturin build --release --strip --out ../dist/${{ matrix.python }}-${{ matrix.os }}
 
       # ---------------------------
       # hangul (uv)
