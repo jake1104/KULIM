@@ -92,19 +92,27 @@ jobs:
           path: dist/${{ matrix.python }}/*
 
   release:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     needs: build
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - "ubuntu-latest"
+          - "windows-latest"
+          - "macos-latest"
 
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: dist
+          path: dist-${{ matrix.python }}-${{ matrix.os }}
 
       - name: Flatten artifacts
         run: |
           mkdir final
-          find dist -type f -exec cp {} final/ \;
+          find dist-${{ matrix.python }}-${{ matrix.os }} -type f -exec cp {} final/ \;
 
       - name: Upload GitHub Release
         uses: softprops/action-gh-release@v2
