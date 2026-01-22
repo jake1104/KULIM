@@ -1,72 +1,80 @@
 # KULIM Hangul
 
-> **Read in other languages**: [한국어](README.md)
+<p align="center">
+  <img src="https://img.shields.io/badge/package-hangul-blue.svg?style=flat-square" alt="Package">
+  <img src="https://img.shields.io/badge/version-v0.0.1-blue.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/python-3.8+-blue.svg?style=flat-square&logo=python" alt="Python">
+  <a href="README.md"><img src="https://img.shields.io/badge/lang-korean-green.svg?style=flat-square" alt="Korean"></a>
+</p>
 
-**KULIM Hangul** is a lightweight, pure Python utility package for Hangul processing.
-It provides basic functions such as Jamo Decomposition and Composition, and Hangul validation, and can be used independently without separate dependencies.
+---
+
+## Overview
+
+**KULIM Hangul** is a lightweight, pure-Python utility package for Hangul processing.
+It provides fundamental features such as Jamo decomposition, composition, and Hangul character validation without any external dependencies.
+
+### Key Features
+
+- **Zero Dependency**: Can be immediately integrated without requiring any other libraries.
+- **High Performance**: Optimized via bitwise operations on Unicode for high-speed processing of large-scale text.
+- **Linguistic Precision**: Fully supports the linguistic distinction between initial, medial, and final consonants (jongsung).
+
+---
 
 ## Installation
 
-It is installed with the KULIM package, but can also be installed independently.
-
 ```bash
-# Independent Install (When distributed on PyPI)
+# Install as a standalone package
 pip install hangul
 
-# Install from source
-pip install -e hangul/
+# Also included in the unified KULIM package
+pip install kulim
 ```
 
-## Key Features
+---
 
-### 1. Jamo Decomposition
+## Usage
 
-Separates Hangul characters into Initial (Choseong), Medial (Jungseong), and Final (Jongseong) consonants.
+### 1. Decomposition & Composition
 
 ```python
-from hangul import decompose, decompose_korean
+from hangul import decompose, compose, decompose_korean
 
-# Single character decomposition
-print(decompose("글"))
-# ('ㄱ', 'ㅡ', 'ㄹ')
+# Single character decomposition: '한' -> ('ㅎ', 'ㅏ', 'ㄴ')
+print(decompose("한"))
 
-# String decomposition
+# Full string decomposition
 print(decompose_korean("한글"))
 # [('ㅎ', 'ㅏ', 'ㄴ'), ('ㄱ', 'ㅡ', 'ㄹ')]
+
+# Composition: ('ㅎ', 'ㅏ', 'ㄴ') -> '한'
+print(compose("ㅎ", "ㅏ", "ㄴ"))
 ```
 
-### 2. Jamo Composition
-
-Combines Initial, Medial, and Final consonants to create Hangul characters.
-
-```python
-from hangul import compose, compose_korean
-
-# Single character composition
-print(compose("ㄱ", "ㅡ", "ㄹ"))
-# '글'
-
-# String composition
-chosungs = [('ㅎ', 'ㅏ', 'ㄴ'), ('ㄱ', 'ㅡ', 'ㄹ')]
-print(compose_korean(chosungs))
-# '한글'
-```
-
-### 3. Utilities
+### 2. Hangul Utilities
 
 ```python
 from hangul import is_hangul, has_jongsung
 
-# Check if Hangul
+# Character validation
 print(is_hangul("가"))  # True
 print(is_hangul("A"))   # False
 
-# Check for Jongsung (Final Consonant)
-print(has_jongsung("감")) # True
+# Check for final consonant (jongsung)
+print(has_jongsung("국")) # True
 print(has_jongsung("가")) # False
 ```
 
-## Developer Info
+---
 
-- This package is part of the KULIM project.
-- For more details, see the [README.md](../../README.en.md) in the parent directory.
+## License
+
+This module is distributed under the [MIT License](../../LICENSE).
+Please use [GitHub Issues](https://github.com/jake1104/KULIM/issues) for contributions and bug reports.
+
+---
+
+<p align="center">
+  Part of the KULIM Framework
+</p>

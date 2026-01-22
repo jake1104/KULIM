@@ -4,6 +4,8 @@ import os
 from .analyzer import MorphAnalyzer
 from .syntax import SyntaxAnalyzer
 from .utils import get_data_dir
+from .logger import logger
+from .exceptions import KulimError
 
 
 def main():
@@ -84,18 +86,24 @@ def handle_analyze(args):
         print("Error: Please provide text to analyze or use --interactive (-i)")
         sys.exit(1)
 
-    print("Initializing MorphAnalyzer...")
-    analyzer = MorphAnalyzer(
-        use_double_array=True,
-        use_sejong=True,
-        use_rust=args.rust,
-        use_gpu=args.gpu,
-        use_neural=getattr(args, "neural", False),
-        debug=False,
-    )
-    syntax_analyzer = SyntaxAnalyzer(use_neural=getattr(args, "neural", False))
-
-    print("Optimization enabled: " + (f"Rust={args.rust}, GPU={args.gpu}"))
+    logger.info("Initializing MorphAnalyzer...")
+    try:
+        analyzer = MorphAnalyzer(
+            use_double_array=True,
+            use_sejong=True,
+            use_rust=args.rust,
+            use_gpu=args.gpu,
+            use_neural=getattr(args, "neural", False),
+            debug=False,
+        )
+        syntax_analyzer = SyntaxAnalyzer(use_neural=getattr(args, "neural", False))
+        logger.debug(f"Optimization: Rust={args.rust}, GPU={args.gpu}")
+    except KulimError as e:
+        logger.error(f"Initialization failed: {e}")
+        sys.exit(1)
+    except Exception as e:
+        logger.error(f"Unexpected error during initialization: {e}")
+        sys.exit(1)
 
     if args.text:
         result = analyzer.analyze(args.text)
@@ -247,8 +255,6 @@ def handle_train(args):
             # For this task, let's assume .conllu is CoNLL-U, .txt could be either if user wants.
             # But the requirement is "conllu file in directory".
 
-            is_conllu = filepath.endswith(".conllu")
-
             # If simple .txt, we might need a flag or heuristic.
             # Current `ConlluParser` is robust enough to return empty if strictly not matching?
             # Let's try Conllu training first.
@@ -373,7 +379,7 @@ def parse_morphemes(morph_str):
     return correct_morphemes
 
 
-def run_benchmark(args):
+def run_benchmark(_args):
     import time
 
     print("=" * 60)

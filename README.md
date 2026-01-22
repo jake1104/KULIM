@@ -1,133 +1,87 @@
-# KULIM
-
-> **다른 언어로 읽기**: [English](README.en.md)
+# KULIM (Korean Unified Linguistic Integration Manager)
 
 <p align="center">
-  <strong>Korean Unified Linguistic Integration Manager</strong>
+  <a href="README.en.md">English</a> | <b>한국어</b>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0-blue" alt="Version 0.1.0">
-  <img src="https://img.shields.io/badge/python-3.8+-blue?logo=python" alt="Python 3.8+">
-  <img src="https://img.shields.io/badge/rust-accelerated-orange?logo=rust" alt="Rust Accelerated">
-  <img src="https://img.shields.io/badge/license-MIT-green?logo=github" alt="MIT License">
+  <img src="https://img.shields.io/badge/version-v0.1.0-blue.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/python-3.11+-blue.svg?style=flat-square&logo=python" alt="Python">
+  <img src="https://img.shields.io/badge/rust-accelerated-orange.svg?style=flat-square&logo=rust" alt="Rust">
+  <img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License">
+  <img src="https://img.shields.io/badge/status-experimental-red.svg?style=flat-square" alt="Status">
 </p>
 
-## 소개
+---
 
-**KULIM**은 한국어 처리를 위한 통합 솔루션입니다.
-단순한 형태소 분석기를 넘어, 한글 자모 처리부터 고성능 구문 분석, 그리고 미래의 로마자 표기와 발음 변환까지 아우르는 **종합 한국어 처리 라이브러리**을 지향합니다.
+**KULIM**은 현대적인 한국어 처리를 위해 설계된 고성능 언어 처리 프레임워크입니다.
+단순히 텍스트를 분석하는 것을 넘어, 한글 자모 처리부터 딥러닝 기반의 정밀 구문 분석까지 아우르는 **통합 솔루션**을 지향합니다.
 
-Python의 생산성과 Rust의 강력한 성능을 결합하여, 연구 목적의 정밀한 분석부터 대규모 서비스의 실시간 처리까지 폭넓게 활용될 수 있습니다.
+Python의 생산성과 Rust의 저수준 성능을 결합하여, 대규모 데이터 처리부터 복잡한 언어학적 연구까지 폭넓은 스펙트럼의 요구사항을 충족합니다.
 
-## 패키지 구성
+## 핵심 기능
 
-KULIM은 기능별로 모듈화된 패키지들을 제공합니다.
+- **하이브리드 엔진**: 사전 기반의 정확성과 Transformer 기반의 유연성을 결합한 형태소 분석.
+- **초고속 성능**: 핵심 알고리즘을 Rust로 재작성하여 기존 Python 엔진 대비 비약적인 처리 속도 향상.
+- **정밀 구문 분석**: Universal Dependencies 표준을 따르는 의존 구문 분석 및 문장 성분 판별.
+- **확장성**: GPU 가속 지원 및 온라인 학습(Online Learning) API를 통한 실시간 모델 업데이트.
 
-### 1. Hangul (`hangul`)
+## 프로젝트 로드맵 (Package Roadmap)
 
-**한글 기초 처리 패키지**입니다.
+1.  **[grammar](grammar/)**: 핵심 언어 분석 엔진 (형태소, 구문 분석)
+2.  **[hangul](hangul/)**: 기초 한글 처리 유틸리티 (자모 분해, 결합 등)
+3.  **[kulim](kulim/)**: 통합 라이브러리 인터페이스
 
-- **주요 기능**: 자모 분해(Decomposition) 및 결합(Composition), 한글 여부 판별, 종성 유무 확인
-- 빠르고 가벼운 순수 Python 유틸리티 모듈로, 전처리 작업에 최적화되어 있습니다.
+## 시작하기 (Quick Start)
 
-### 2. Grammar (`grammar`)
-
-**핵심 언어 처리 엔진**입니다.
-
-- **주요 기능**:
-  - **형태소 분석**: `Morph` 객체 기반의 상세 분석 결과 제공 (표면형, 품사, 기본형, 속성 등)
-  - **구문 분석**: 의존 구문 분석 및 문장 성분(주어, 목적어, 서술어 등) 판별
-  - **학습 시스템**: CoNLL-U 기반 모델 학습 및 온라인 추가 학습 지원
-- **기술**: Transformer + Viterbi 하이브리드, Rust 가속 Trie, GPU 가속 지원
-- [상세 설명 및 사용법 보러가기](grammar/README.md)
-
-## 설치 방법
+KULIM은 현대적인 패키지 매니저인 `uv` 사용을 권장합니다.
 
 ```bash
-# 저장소 복제 및 설치
+# 저장소 복제 및 환경 설정
 git clone https://github.com/jake1104/KULIM.git
 cd KULIM
 uv sync --all-extras
 ```
 
-## 주요 기능 요약
-
-### 1. 형태소 분석 및 속성 판별
-
-`grammar` 패키지는 분석 결과를 단순히 텍스트로 돌려주는 것이 아니라, 풍부한 속성을 가진 `Morph` 객체 리스트로 반환합니다.
+### 기본 사용법
 
 ```python
 from grammar import MorphAnalyzer
 
+# 엔진 초기화 (Rust 가속 활성화)
 analyzer = MorphAnalyzer(use_rust=True)
-result = analyzer.analyze("친구와 학교에 갔다.")
 
+# 형태소 분석 실행
+result = analyzer.analyze("KULIM으로 한국어를 분석합니다.")
 for m in result:
-    print(f"[{m.surface}] 품사: {m.pos}, 기본형: {m.lemma}")
-    print(f"  - 실질형태소 여부: {m.is_lexical}")
-    print(f"  - 자립형태소 여부: {m.is_free}")
+    print(f"{m.surface}/{m.pos}")
 ```
 
-### 2. 구문 분석 (Syntax Parsing)
+## 프로젝트 상태 및 법적 고지 (Project Status & Disclaimer)
 
-문장의 구조를 분석하여 각 어절의 문장 성분을 판별합니다.
+본 버전(`v0.1.0`)은 KULIM의 첫 번째 공식 릴리즈이지만, 여전히 알고리즘 고도화와 데이터 구조 최적화가 진행 중인 **실험적 버전(Experimental Release)**으로 간주됩니다.
 
-```python
-from grammar import SyntaxAnalyzer, MorphAnalyzer
-
-m_analyzer = MorphAnalyzer()
-s_analyzer = SyntaxAnalyzer()
-
-# 분석 실행 (Word, POS_Sequence, Component)
-syntax_result = s_analyzer.analyze(text="나는 밥을 먹었다.", morph_analyzer=m_analyzer)
-
-for word, pos, comp in syntax_result:
-    print(f"{word}: {comp.name}")
-    # 나: SUBJECT, 밥: OBJECT, 먹었다: PREDICATE
-```
-
-### 3. 한글 자모 처리
-
-```python
-from hangul import decompose_korean, has_jongsung
-
-# 자모 분해
-print(decompose_korean("한글")) # [('ㅎ', 'ㅏ', 'ㄴ'), ('ㄱ', 'ㅡ', 'ㄹ')]
-
-# 종성 확인
-print(has_jongsung("강")) # True
-```
-
-> **상세한 API 명세는 각 패키지의 README를 참조하세요.**
+> [!WARNING]
 >
-> - [Grammar 패키지 상세 가이드](grammar/README.md)
-> - [Hangul 패키지 상세 가이드](hangul/README.md)
+> - **Zero Warranty**: 본 소프트웨어는 '있는 그대로' 제공되며, 분석 결과의 정확성이나 이로 인해 발생한 유무형의 손실에 대해 저작권자는 법적 책임을 지지 않습니다.
+> - **Breaking Changes**: v1.0.0 정식 버전 도달 전까지 API 명세가 예고 없이 변경될 수 있습니다.
+> - **Production Note**: 실서비스 환경에 도입 전 반드시 충분한 검증 과정을 거치시기 바랍니다.
 
-## 버전 정보
+## 변경 이력 (Changelog)
 
-### v0.1.0-rc.9 (Grammar), v0.0.1 (Hangul) (2026.1.1)
+자세한 버전별 변경 사항은 [CHANGELOG.md](CHANGELOG.md)에서 확인하실 수 있습니다.
 
-- **실험적 릴리즈**
-- 하이브리드 형태소 분석기 및 Rust 가속 엔진 탑재
-- 기초 한글 처리 모듈 분리 및 최적화
-- CLI 및 Python API 정식 지원
+## 피드백 및 기여 (Feedback & Contribution)
 
-## 라이선스
+KULIM은 오픈 소스 프로젝트로 여러분의 기여를 환영합니다.
 
-이 프로젝트는 **CC BY-SA 4.0** 라이선스를 따릅니다.
-자세한 내용은 [LICENSE](LICENSE.md) 파일을 참조하십시오.
+- **Issues**: 버그 보고 및 기능 제안은 [GitHub Issues](https://github.com/jake1104/KULIM/issues)를 이용해 주세요.
+- **Contact**: 기술 문의 및 협업 제안은 [iamjake1104@gmail.com](mailto:iamjake1104@gmail.com)으로 연락 바랍니다.
 
-## 개발자
+## 라이선스 (License)
 
-- **안정우 (jake1104)**
-  - GitHub: [@jake1104](https://github.com/jake1104)
-  - 문의: [iamjake1104@gmail.com](mailto:iamjake1104@gmail.com)
-
-## 자료 (Resources)
-
-본 프로젝트는 Universal Dependencies의 [UD Korean Kaist Treebank](https://universaldependencies.org/treebanks/ko_kaist/index.html)를 사용합니다.  
-이 데이터는 **CC BY-SA 4.0** 라이선스에 따라 제공됩니다.
+본 프로젝트는 **MIT License**를 따릅니다.
+단, 학습에 사용된 데이터셋([UD Korean Kaist](https://universaldependencies.org/treebanks/ko_kaist/index.html))의 라이선스 규정을 함께 확인하시기 바랍니다.
 
 ---
 

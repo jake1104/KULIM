@@ -1,133 +1,87 @@
-# KULIM
-
-> **Read in other languages**: [한국어](README.md)
+# KULIM (Korean Unified Linguistic Integration Manager)
 
 <p align="center">
-  <strong>Korean Unified Linguistic Integration Manager</strong>
+  <b>English</b> | <a href="README.md">한국어</a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.1.0-blue" alt="Version 0.1.0">
-  <img src="https://img.shields.io/badge/python-3.8+-blue?logo=python" alt="Python 3.8+">
-  <img src="https://img.shields.io/badge/rust-accelerated-orange?logo=rust" alt="Rust Accelerated">
-  <img src="https://img.shields.io/badge/license-MIT-green?logo=github" alt="MIT License">
+  <img src="https://img.shields.io/badge/version-v0.1.0-blue.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/python-3.11+-blue.svg?style=flat-square&logo=python" alt="Python">
+  <img src="https://img.shields.io/badge/rust-accelerated-orange.svg?style=flat-square&logo=rust" alt="Rust">
+  <img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License">
+  <img src="https://img.shields.io/badge/status-experimental-red.svg?style=flat-square" alt="Status">
 </p>
 
-## Introduction
+---
 
-**KULIM** is a unified solution for Korean language processing.
-Going beyond a simple morphological analyzer, it aims to be a **comprehensive Korean processing library** covering everything from basic Hangul Jamo processing to high-performance syntax parsing, and in the future, Romanization and pronunciation conversion.
+**KULIM** is a high-performance linguistics processing framework designed for modern Korean language processing.
+Going beyond mere text analysis, it aims to be an **integrated solution** covering everything from basic Hangul character handling to deep learning-based precision syntax parsing.
 
-Combining the productivity of Python with the powerful performance of Rust, it can be widely used from precise analysis for research purposes to real-time processing for large-scale services.
+By combining the productivity of Python with the low-level performance of Rust, KULIM meets a wide spectrum of requirements, from large-scale data processing to complex linguistic research.
 
-## Package Structure
+## Key Features
 
-KULIM provides modular packages for each function.
+- **Hybrid Engine**: Morphological analysis combining dictionary-based precision with Transformer-based flexibility.
+- **Ultra-fast Performance**: Core algorithms rewritten in Rust for a significant leap in processing speed compared to pure Python engines.
+- **Precision Syntax Parsing**: Dependency parsing and sentence component identification following Universal Dependencies standards.
+- **Scalability**: GPU acceleration support and real-time model updates via Online Learning APIs.
 
-### 1. Hangul (`hangul`)
+## Package Roadmap
 
-**Basic Hangul processing package.**
+1.  **[grammar](grammar/)**: Core language analysis engine (morphology, syntax parsing)
+2.  **[hangul](hangul/)**: Basic Hangul processing utilities (decomposition, composition, etc.)
+3.  **[kulim](kulim/)**: Unified library interface
 
-- **Key Features**: Jamo decomposition/composition, Hangul validation, Jongsung (final consonant) check.
-- A fast and lightweight pure Python utility module optimized for preprocessing tasks.
+## Getting Started
 
-### 2. Grammar (`grammar`)
-
-**Core language processing engine.**
-
-- **Key Features**:
-  - **Morphological Analysis**: Provides detailed analysis results based on the `Morph` object (surface form, POS, lemma, properties, etc.).
-  - **Syntax Parsing**: Dependency parsing and sentence component identification (Subject, Object, Predicate, etc.).
-  - **Training System**: Supports CoNLL-U based model training and online learning.
-- **Technology**: Transformer + Viterbi hybrid, Rust-accelerated Trie, GPU acceleration support.
-- [View Details and Usage](grammar/README.en.md)
-
-## Installation
+KULIM recommends using the modern package manager, `uv`.
 
 ```bash
-# Clone repository and install
+# Clone the repository and set up the environment
 git clone https://github.com/jake1104/KULIM.git
 cd KULIM
 uv sync --all-extras
 ```
 
-## Core Features Summary
-
-### 1. Morphological Analysis & Classification
-
-The `grammar` package returns analysis results as a list of `Morph` objects with rich attributes, not just plain text.
+### Basic Usage
 
 ```python
 from grammar import MorphAnalyzer
 
+# Initialize engine (Enable Rust acceleration)
 analyzer = MorphAnalyzer(use_rust=True)
-result = analyzer.analyze("친구와 학교에 갔다.")
 
+# Run morphological analysis
+result = analyzer.analyze("KULIM helps analyze Korean.")
 for m in result:
-    print(f"[{m.surface}] POS: {m.pos}, Lemma: {m.lemma}")
-    print(f"  - Is Lexical: {m.is_lexical}")
-    print(f"  - Is Free: {m.is_free}")
+    print(f"{m.surface}/{m.pos}")
 ```
 
-### 2. Syntax Parsing
+## Project Status & Disclaimer
 
-Analyzes the structure of a sentence to identify the syntactic components of each eojeol.
+While this version (`v0.1.0`) is the first official release of KULIM, it is still considered an **Experimental Release** with ongoing algorithm refinements and data structure optimizations.
 
-```python
-from grammar import SyntaxAnalyzer, MorphAnalyzer
-
-m_analyzer = MorphAnalyzer()
-s_analyzer = SyntaxAnalyzer()
-
-# Execute analysis (Word, POS_Sequence, Component)
-syntax_result = s_analyzer.analyze(text="나는 밥을 먹었다.", morph_analyzer=m_analyzer)
-
-for word, pos, comp in syntax_result:
-    print(f"{word}: {comp.name}")
-    # 나: SUBJECT, 밥: OBJECT, 먹었다: PREDICATE
-```
-
-### 3. Hangul Jamo Processing
-
-```python
-from hangul import decompose_korean, has_jongsung
-
-# Jamo decomposition
-print(decompose_korean("한글")) # [('ㅎ', 'ㅏ', 'ㄴ'), ('ㄱ', 'ㅡ', 'ㄹ')]
-
-# Jongsung check
-print(has_jongsung("강")) # True
-```
-
-> **For detailed API specifications, please refer to the README of each package.**
+> [!WARNING]
 >
-> - [Grammar Package Detailed Guide](grammar/README.en.md)
-> - [Hangul Package Detailed Guide](hangul/README.en.md)
+> - **Zero Warranty**: This software is provided "as is," and the author assumes no legal responsibility for the accuracy of results or any loss incurred through its use.
+> - **Breaking Changes**: API specifications may change without notice before reaching the v1.0.0 stable release.
+> - **Production Note**: Please conduct thorough validation before introducing this into a production environment.
 
-## Version Info
+## Changelog
 
-### v0.1.0-rc.9 (Grammar), v0.0.1 (Hangul) (Jan 1, 2026)
+Detailed version-by-version changes can be found in [CHANGELOG.md](CHANGELOG.md).
 
-- **Experimental Release**
-- Hybrid Morphological Analyzer and Rust Acceleration Engine included
-- Basic Hangul processing module separated and optimized
-- Official support for CLI and Python API
+## Feedback & Contribution
+
+KULIM is an open-source project and welcomes your contributions.
+
+- **Issues**: Use [GitHub Issues](https://github.com/jake1104/KULIM/issues) for bug reports and feature requests.
+- **Contact**: For technical inquiries or collaboration proposals, please reach out to [iamjake1104@gmail.com](mailto:iamjake1104@gmail.com).
 
 ## License
 
-This project follows the **CC BY-SA 4.0** license.
-See the [LICENSE](LICENSE.md) file for details.
-
-## Developers
-
-- **Jeongwoo Ahn (jake1104)**
-  - GitHub: [@jake1104](https://github.com/jake1104)
-  - Contact: [iamjake1104@gmail.com](mailto:iamjake1104@gmail.com)
-
-## Resources
-
-This project uses the [UD Korean Kaist Treebank](https://universaldependencies.org/treebanks/ko_kaist/index.html) from the Universal Dependencies project
-, licensed under CC BY-SA 4.0.
+This project is licensed under the **MIT License**.
+Please also check the license regulations of the dataset used for training ([UD Korean Kaist](https://universaldependencies.org/treebanks/ko_kaist/index.html)).
 
 ---
 

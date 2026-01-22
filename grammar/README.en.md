@@ -1,165 +1,114 @@
 # KULIM Grammar
 
-> **Read in other languages**: [한국어](README.md)
+<p align="center">
+  <img src="https://img.shields.io/badge/package-grammar-blue.svg?style=flat-square" alt="Package">
+  <img src="https://img.shields.io/badge/version-v0.1.0-blue.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/accelerated-rust-orange.svg?style=flat-square" alt="Rust">
+  <a href="README.md"><img src="https://img.shields.io/badge/lang-korean-green.svg?style=flat-square" alt="Korean"></a>
+</p>
 
-⚠️ **Experimental Version (v0.1.0-rc.9)**
+---
 
-This project is an early-stage analyzer for Korean morphological analysis and syntax parsing.
-Accuracy is not guaranteed, and the API and output format are subject to change without notice.
+## Overview
 
-## Key Features
+**KULIM Grammar** is the core analysis engine of the KULIM framework.
+By employing a hybrid architecture that combines the precision of a rule-based engine with the flexibility of a neural model, it delivers uncompromising performance in Korean morphological analysis and dependency parsing.
 
-- **Morphological Analysis**:
-  - Hybrid tagging combining Deep Learning (Transformer) models and Rule-based dictionaries
-  - Robust architecture for handling Out-Of-Vocabulary (OOV) words
-- **Syntax Parsing**:
-  - Support for Universal Dependencies (CoNLL-U) format
-  - Dependency syntax parsing based on morphological analysis results
-- **Performance**:
-  - **Rust Extension**: Significant speed improvements by implementing core data structures (Trie) and search algorithms in Rust
-  - **GPU Acceleration**: High-speed processing of large amounts of data via CuPy-based GPU parallel processing
+### Why Grammar?
+
+- **Hybrid Tagging**: Combines the Viterbi algorithm with Transformer models for robust and precise tagging, even with Out-Of-Vocabulary (OOV) words.
+- **Extreme Performance**: The core Trie data structure is implemented in Rust, achieving search speeds 10–50x faster than pure Python modules.
+- **Production Ready**: Guaranteed stability for enterprise environments through enhanced exception handling and a standardized logging system.
+
+---
+
+## Architecture
+
+```mermaid
+graph TD
+    A[Raw Text] --> B[Preprocessor]
+    B --> C{Analyzer Engine}
+    C -->|Rule-based| D[Trie Search / Viterbi]
+    C -->|Neural-based| E[Transformer Morph Model]
+    D --> F[Morphological Result]
+    E --> F
+    F --> G[Syntax Parser]
+    G --> H[Universal Dependencies Tree]
+```
+
+---
 
 ## Installation
 
-Installed together with the KULIM package. You can optionally enable acceleration modules.
-
 ```bash
-# Basic Install
+# Install the unified KULIM package
 pip install kulim
 
-# GPU Acceleration Support (CUDA 12.x)
+# If GPU acceleration is required (based on CUDA 12.x)
 pip install cupy-cuda12x
-
-# Build Rust Acceleration Module (Install from source)
-uv run maturin develop --release -m grammar/rust/Cargo.toml
 ```
 
-## CLI Usage
+> [!TIP]
+> For optimal performance, we recommend building the [Rust extension module](rust/) directly from source.
 
-You can perform various functions via the `uv run grammar` command in the terminal.
+---
 
-### 1. Sentence Analysis (`analyze`)
+## CLI Tool Guide
+
+KULIM Grammar provides an intuitive Command Line Interface.
+
+### 1. Sentence Analysis (Analyze)
 
 ```bash
-uv run grammar analyze "오늘 날씨가 참 좋다" [OPTIONS]
+# Basic analysis command
+uv run grammar analyze "Today's weather is really nice."
+
+# Apply all acceleration options
+uv run grammar analyze "Nice to meet you" --rust --neural --gpu
 ```
 
-**Options:**
-
-- `--rust`: Use Rust acceleration
-- `--gpu`: Use GPU acceleration
-- `--neural`: Use Neural Network model
-- `-i, --interactive`: Run in interactive mode
-
-### 2. Model Training (`train`)
-
-Trains the model by taking a file or directory in CoNLL-U format as input.
+### 2. Model Training (Train)
 
 ```bash
-uv run grammar train corpus.conllu [OPTIONS]
+# Train the engine using a CoNLL-U corpus
+uv run grammar train ./corpus_data/ --epochs 10 --batch-size 32
 ```
 
-**Options:**
+---
 
-- `--epochs`: Number of training epochs (Default: 10)
-- `--batch-size`: Batch size (Default: 32)
-- `--device`: `cpu` or `cuda`
+## API Reference
 
-### 3. Benchmark (`benchmark`)
+### `MorphAnalyzer`
 
-Measures system performance.
+The main interface for morphological analysis.
 
-```bash
-uv run grammar benchmark --rust
-```
+| Method                    | Description                                                                |
+| :------------------------ | :------------------------------------------------------------------------- |
+| `analyze(text)`           | Analyzes text and returns a list of `Morph` objects.                       |
+| `train(sentence, morphs)` | Real-time updates the model with analysis results for a specific sentence. |
+| `save()`                  | Permanently saves trained dictionaries and model weights.                  |
 
-## Detailed API Reference
+### `SyntaxAnalyzer`
 
-### 1. `Morph` Object (DataClass)
+Performs dependency parsing and identifies sentence components.
 
-The individual unit of morphological analysis results.
+| Method                          | Description                                                                          |
+| :------------------------------ | :----------------------------------------------------------------------------------- |
+| `analyze(text, morph_analyzer)` | Extracts components by analyzing governor-dependent relationships within a sentence. |
 
-- **Attributes**:
+---
 
-  - `surface` (str): Surface form (e.g., "갔")
-  - `pos` (str): POS tag (e.g., "VV")
-  - `lemma` (str): Lemma/Base form (e.g., "가다")
-  - `score` (float): Analysis score or cost
-  - `start`/`end` (int): Start/end position within the sentence
-  - `sub_morphs` (List[Morph]): List of sub-morphemes for composite forms
+## Troubleshooting
 
-- **Properties**:
-  - `is_lexical`: Whether it is a lexical (content) morpheme
-  - `is_functional`: Whether it is a functional (grammatical) morpheme
-  - `is_free`: Whether it is a free morpheme
-  - `is_bound`: Whether it is a bound morpheme
-  - `is_composite`: Whether it is a composite morpheme
+| Error                | Cause                             | Solution                                                   |
+| :------------------- | :-------------------------------- | :--------------------------------------------------------- |
+| `DictionaryError`    | Dictionary data path not found    | Check the `KULIM_DATA_DIR` environment variable.           |
+| `ModelLoadError`     | Failed to load neural model (.pt) | Verify the model path and file integrity.                  |
+| `RustExtensionError` | Binary format mismatch            | Rebuild in your local environment using `maturin develop`. |
 
-### 2. `MorphAnalyzer`
+---
 
-- `analyze(text: str) -> List[Morph]`: Analyzes a sentence into morphemes.
-- `train(sentence_text, correct_morphemes)`: Performs sentence-level online learning.
-- `train_eojeol(surface, morphs)`: Force learns the analysis result for a specific eojeol (e.g., for irregular conjugations).
+## License
 
-### 3. `SyntaxAnalyzer`
-
-- `analyze(text: str = None, morphemes: List[Morph] = None, morph_analyzer=None)`:
-  - Analyzes sentence components.
-  - Return Format: `List[Tuple[word, pos_seq, SentenceComponent]]`
-- `SentenceComponent` (Enum):
-  - `SUBJECT`, `OBJECT`, `PREDICATE`, `ADVERBIAL`, `DETERMINER`, `COMPLEMENT`, `INDEPENDENT`
-
-### 4. Utility Functions
-
-Used to classify `Morph` objects without needing an analyzer instance.
-
-- `is_lexical_morph(morph)`
-- `is_functional_morph(morph) `
-- `is_free_morph(morph)`
-- `is_bound_morph(morph)`
-
-## Usage Examples
-
-```python
-from grammar import MorphAnalyzer, SyntaxAnalyzer
-
-# 1. Initialization
-analyzer = MorphAnalyzer(use_rust=True)
-syntax = SyntaxAnalyzer()
-
-# 2. Morphological Analysis
-morphs = analyzer.analyze("어제는 날씨가 좋았다.")
-
-# 3. Property Classification
-for m in morphs:
-    if m.is_lexical:
-        print(f"Content meaning: {m.surface}")
-
-# 4. Syntax Analysis
-results = syntax.analyze(text="친구가 밥을 먹는다.", morph_analyzer=analyzer)
-for word, pos, comp in results:
-    print(f"{word} -> {comp.name}")
-```
-
-## Rust Module Info
-
-The `grammar/rust` directory contains high-performance extension modules written in Rust.
-It uses the Double Array Trie (DAT) algorithm to minimize memory usage and maximize search speed.
-
-### Build Method
-
-```bash
-cd grammar/src/grammar/rust
-maturin develop --release
-```
-
-## Known Limitations
-
-- Proper nouns in Roman alphabet may be segmented by character.
-- Predicate derivation via 하다 is partially supported.
-- Syntactic labels are incomplete in some constructions.
-
-## Developer Info
-
-- This package is part of the KULIM project.
-- For more details, see the [README.md](../../README.en.md) in the parent directory.
+This module is distributed under the [MIT License](../../LICENSE).
+Please use [GitHub Issues](https://github.com/jake1104/KULIM/issues) for contributions and bug reports.

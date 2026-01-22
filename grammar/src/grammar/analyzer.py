@@ -6,6 +6,8 @@ from .morph import Morph
 from .dictionary import build_comprehensive_trie
 from .preprocessor import Preprocessor
 from .utils import get_data_dir, get_version
+from .logger import logger
+from .exceptions import ModelLoadError, AnalysisError, DictionaryError
 
 
 class MorphAnalyzer:
@@ -18,24 +20,29 @@ class MorphAnalyzer:
         use_gpu=False,
         use_rust=False,
         use_neural=False,
-        load_defaults=True,  # New flag
+        load_defaults=True,
         debug=False,
     ):
         if debug:
-            print("=" * 60)
-            print("  v0.1.0 형태소 분석기 초기화")
-            if use_gpu:
-                print("  GPU 가속: ON")
-            if use_rust:
-                print("  Rust 가속: ON")
-            print("=" * 60)
+            logger.setLevel("DEBUG")
 
-        self.trie = build_comprehensive_trie(
-            use_double_array=use_double_array,
-            use_sejong=use_sejong,
-            use_rust=use_rust,
-            load_defaults=load_defaults,
-        )
+        self._print_legal_notice()
+
+        if debug:
+            logger.debug(
+                f"Initializer Flags: GPU={use_gpu}, Rust={use_rust}, Neural={use_neural}"
+            )
+
+        try:
+            self.trie = build_comprehensive_trie(
+                use_double_array=use_double_array,
+                use_sejong=use_sejong,
+                use_rust=use_rust,
+                load_defaults=load_defaults,
+            )
+        except Exception as e:
+            logger.error(f"Failed to initialize trie dictionary: {e}")
+            raise DictionaryError(f"Trie initialization failed: {e}")
 
         self.preprocessor = Preprocessor()
         self.stemmer = Stemmer(trie=self.trie, use_gpu=use_gpu, use_rust=use_rust)
@@ -48,20 +55,27 @@ class MorphAnalyzer:
                 from .neural_wrapper import NeuralWrapper
 
                 self.neural_wrapper = NeuralWrapper()
-                if debug:
-                    print("  [v] Neural Morphological Analysis: ON")
+                logger.info("Neural Morphological Analysis enabled.")
             except Exception as e:
-                # Silently fail or warn?
-                # User wants "usable CLI+API", spammed prints are bad.
-                # Let's keep it clean.
-                if debug:
-                    print(f"  ⚠ Neural Model Load Failed: {e}")
+                logger.warning(
+                    f"Neural Model Load Failed (falling back to rule-based): {e}"
+                )
                 self.use_neural = False
 
-        if debug:
-            print("=" * 60)
-            print("  [v] 초기화 완료")
-            print("=" * 60)
+    def _print_legal_notice(self):
+        """실험적 버전 법적 면책 고지 출력"""
+        notice = [
+            "  " + "=" * 56,
+            "  KULIM (Korean Unified Linguistic Integration Manager) v0.1.0",
+            "  [!] 법적 고지 및 면책 조항 (Legal Notice & Disclaimer)",
+            "  - 본 소프트웨어는 '실험적 정식 버전'으로 제공됩니다.",
+            "  - 결과의 무결성이나 정확성을 보장하지 않으며,",
+            "    사용 중 발생한 데이터 손실 등에 책임을 지지 않습니다.",
+            "  - 상업적 용도 사용 시 반드시 사전 검증을 권장합니다.",
+            "  " + "=" * 56,
+        ]
+        for line in notice:
+            print(line)
 
     def save(self):
         """현재 모델 저장"""
@@ -101,24 +115,15 @@ class MorphAnalyzer:
                 # 만약 DoubleArrayTrie라면 (dictionary.dat)
                 if trie_type == "DoubleArrayTrie":
                     self.trie.save(save_path)
-                    print(f"  [v] DAT 사전 저장 완료: {save_path}")
-
-                    # (선택) Source 보존을 위한 pickle 저장?
-                    # DAT는 원본 구조(Trie)를 가지고 있지 않으므로 원본 복원은 불가능할 수 있음.
-                    # 하지만 analyzer.train() 후에는 메모리에 추가된 단어들이 있음.
-                    # 이를 영구 보존하려면 DAT 자체를 저장하거나, 추가된 단어 로그를 남겨야 함.
-                    # 여기선 DAT 저장만 수행.
-
+                    logger.info(f"DAT dictionary saved: {save_path}")
                 elif trie_type == "RustTrieWrapper":
                     self.trie.save(save_path)
-                    print(f"  [v] Rust 사전 저장 완료: {save_path}")
-
-                else:  # PythonTrieFallback represents Source
+                    logger.info(f"Rust dictionary saved: {save_path}")
+                else:
                     self.trie.save(save_path)
-                    print(f"  [v] 원본 사전 저장 완료: {save_path}")
-
+                    logger.info(f"Source dictionary saved: {save_path}")
             except Exception as e:
-                print(f"  ⚠ 사전 저장 실패: {e}")
+                logger.error(f"Failed to save dictionary: {e}")
 
     def analyze(self, text: str) -> List[Morph]:
         """형태소 분석 (v02 호환)
@@ -319,7 +324,7 @@ class MorphAnalyzer:
                 sentence_text, tuple_morphemes
             )
             if loss > 0:
-                print(f"  [v] Neural 학습 완료 (Loss: {loss:.4f})")
+                logger.info(f"Neural training step complete (Loss: {loss:.4f})")
 
         # 2. 미등록 단어(OOV) Dictionary에 추가 (메모리 상)
         for word, pos in tuple_morphemes:
