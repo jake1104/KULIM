@@ -1,0 +1,38 @@
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "grammar"
+version = "0.1.1"
+requires-python = ">=3.11,<4.0"
+description = "KULIM Grammar"
+license = { text = "CC BY-SA 4.0" }
+authors = [
+    { name = "jake1104", email = "iamjake1104@gmail.com" }
+]
+dependencies = [
+    "maturin>=1.10.2,<2.0.0",
+    "hangul>=0.0.1,<1.0.0",
+    "torch>=2.8,<2.9",
+]
+
+[[tool.uv.index]]
+name = "torch"
+url = "https://download.pytorch.org/whl/cu129"
+
+[project.optional-dependencies]
+gpu = ["cupy-cuda12x>=13.6.0,<14.0.0"]
+
+[project.scripts]
+grammar = "grammar.cli:main"
+
+[tool.uv.sources]
+hangul = { workspace = true }
+
+[tool.maturin]
+manifest-path = "rust/Cargo.toml"
+python-source = "src"
+module-name = "grammar.kulim_rust"
+bindings = "pyo3"

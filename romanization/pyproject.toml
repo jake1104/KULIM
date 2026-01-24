@@ -1,0 +1,17 @@
+[project]
+name = "romanization"
+version = "0.0.1"
+requires-python = ">=3.11,<4.0"
+description = "KULIM Korean Romanization (Revised Romanization)"
+license = { text = "CC BY-SA 4.0" }
+authors = [
+    { name = "jake1104", email = "iamjake1104@gmail.com" }
+]
+dependencies = [
+    "hangul>=0.0.1",
+    "pronunciation>=0.0.1",
+]
+
+[tool.uv.sources]
+hangul = { workspace = true }
+pronunciation = { workspace = true }

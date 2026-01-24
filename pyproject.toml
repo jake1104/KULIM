@@ -1,0 +1,36 @@
+
+[project]
+name = "kulim-workspace"
+version = "0.1.1"
+description = "Korean Unified Linguistic Integration Manager (KULIM) Workspace"
+authors = [
+    { name = "Jeongwoo Ahn", email = "iamjake1104@gmail.com" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.11"
+
+[tool.uv.workspace]
+members = [
+    "grammar",
+    "hangul",
+    "kulim",
+    "pronunciation",
+    "romanization"
+]
+
+[tool.uv.sources]
+grammar = { workspace = true }
+hangul  = { workspace = true }
+kulim = { workspace = true }
+pronunciation = { workspace = true }
+romanization = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "grammar",
+    "hangul",
+    "kulim",
+    "pronunciation",
+    "romanization",
+]
