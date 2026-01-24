@@ -14,7 +14,7 @@ authors = [
 ]
 dependencies = [
     "maturin>=1.10.2,<2.0.0",
-    "hangul>=0.0.1,<1.0.0",
+    "hangul>=0.0.1,<=0.1.0",
     "torch>=2.8,<2.9",
 ]
 

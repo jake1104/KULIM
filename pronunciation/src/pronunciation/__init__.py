@@ -4,7 +4,7 @@ from .engine import PronunciationEngine
 try:
     __version__ = version("pronunciation")
 except PackageNotFoundError:
-    __version__ = "0.0.1"
+    __version__ = "0.1.0"
 
 _engine = PronunciationEngine()
 

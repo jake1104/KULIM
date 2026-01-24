@@ -1,6 +1,6 @@
 [project]
 name = "pronunciation"
-version = "0.0.1"
+version = "0.1.0"
 requires-python = ">=3.11,<4.0"
 description = "KULIM Korean Pronunciation Rules"
 license = { text = "CC BY-SA 4.0" }
@@ -8,7 +8,7 @@ authors = [
     { name = "jake1104", email = "iamjake1104@gmail.com" }
 ]
 dependencies = [
-    "hangul>=0.0.1",
+    "hangul>=0.0.1,<=0.1.0",
 ]
 
 [tool.uv.sources]

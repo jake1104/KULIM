@@ -531,7 +531,7 @@ wheels = [
 
 [[package]]
 name = "pronunciation"
-version = "0.0.1"
+version = "0.1.0"
 source = { editable = "pronunciation" }
 dependencies = [
     { name = "hangul" },
@@ -567,7 +567,7 @@ wheels = [
 
 [[package]]
 name = "romanization"
-version = "0.0.1"
+version = "0.1.0"
 source = { editable = "romanization" }
 dependencies = [
     { name = "hangul" },
