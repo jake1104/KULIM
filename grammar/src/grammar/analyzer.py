@@ -293,134 +293,85 @@ class MorphAnalyzer:
 
             for eojeol, res in zip(eojeols, batch_results):
                 # -----------------------------------------------------------
-                # Dictionary-Guided Correction (Hybrid)
+                # Deep Hybrid Ensemble: Log-Linear Interpolation 
                 # -----------------------------------------------------------
-                # Goal: Use the Trie dictionary to correct Neural errors for "Essential" morphemes (Josa, Eomi).
-                # The user wants to avoid "hardcoding" specific words like '갔다', but allow using the Basic Dictionary.
-                #
-                # Strategy:
-                # 1. Check if the ending of the Eojeol matches a known Ending key in the Dictionary.
-                # 2. If Neural predicts "는/ETM + 다/ETM", but Dictionary has "는다/EF", prefer Dictionary.
-
-                # Simple implementation for Eojeol-final correction:
-                # Iterate from end of eojeol, check if substring exists in dictionary with high-priority POS (Eomi/Josa).
-
-                # Flatten surface form
-                surface = "".join(r[0] for r in res)
-
-                # Try to find the longest suffix that matches a known Eomi/Josa in Trie
-                # This requires access to self.trie.
-                # Since Neural Mode might not use Trie for STEMMING, we can still use it for LOOKUP.
-
-                # Only apply if self.trie is available
-                refined_res = res  # Default
-
-                if self.trie:
-                    # Check suffixes
-                    # E.g. "않는다" -> Check "는다", "다"
-                    # "는다" -> found as EF?
-
-                    # We look for a suffix that is a known Eomi/Josa
-                    # AND the neural model fragmented it or tagged it wrongly.
-
-                    found_correction = None
-                    n = len(surface)
-                    for i in range(n - 1, max(-1, n - 6), -1):  # Check last 5 chars max
-                        suffix = surface[i:]
-                        # search returns: (pos, lemma) or None?
-                        # Trie.search usually returns just POS or data.
-                        # Trie.search_all or get?
-                        # Trie.search returns boolean or data?
-                        # Wait, I need to check Trie API. Usually it returns (pos, ...).
-                        # Let's assume search returns list of possible POS or one POS.
-
-                        found_node = self.trie.search(suffix)
-                        if found_node:
-                            # Expecting found_node to contain POS info.
-                            # In basic Trie, search might return True/False or Node.
-                            # In this codebase, Dictionary/Trie wrapper returns...
-                            # RustTrieWrapper.search -> returns data string or None?
-                            # PythonTrieFallback.search -> returns data?
-
-                            # Let's peek at trie.py or assume it returns POS string.
-                            # If found_node is a POS string like "EF" or contains specific tags.
-
-                            known_pos = str(found_node)  # Safety
-
-                            # Target tags to trust from Dictionary:
-                            # Eomi: EF, EC, ETM, EP
-                            # Josa: JKS, JKO, JKB, JX, etc.
-                            if any(
-                                tag in known_pos
-                                for tag in [
-                                    "EF",
-                                    "EC",
-                                    "EP",
-                                    "JKS",
-                                    "JKO",
-                                    "JKB",
-                                    "JX",
-                                    "VCP",
-                                    "VCN",
-                                ]
-                            ):
-                                # We found a valid suffix in dictionary (e.g. "는다"/EF).
-                                # Now, does the Neural output match this?
-                                # Neural: [('는', 'ETM'), ('다', 'ETM')]
-                                # Suffix: '는다' / EF
-
-                                # We should merge the corresponding neural tokens into this one.
-                                # Find split point in neural res
-
-                                # Reconstruct refined_res:
-                                # prefix + (suffix, known_pos)
-
-                                # Needs finding where 'suffix' starts in 'res'.
-                                # res = [('않', 'VX'), ('는', 'ETM'), ('다', 'EF')] ...
-
-                                current_len = 0
-                                split_idx = -1
-                                for ridx, (rwm, rpos) in enumerate(res):
-                                    if current_len == i:  # Found start of suffix
-                                        split_idx = ridx
+                # res is a list of (surface, pos, prob) from the Neural Model.
+                
+                # 1. Evaluate Neural Confidence
+                # We calculate the geometric mean of probabilities to get a sentence-level confidence.
+                if not res:
+                    continue
+                    
+                neural_probs = [item[2] for item in res if len(item) == 3]
+                if not neural_probs:
+                    neural_probs = [1.0] # Fallback if probability not provided
+                
+                # Log sum for stability
+                import math
+                log_prob_sum = sum(math.log(max(p, 1e-9)) for p in neural_probs)
+                avg_log_prob = log_prob_sum / len(neural_probs)
+                neural_confidence = math.exp(avg_log_prob)
+                
+                # Reconstruct Morph objects from neural results
+                neural_morphs = [Morph(w, p, w) for w, p, *_ in res]
+                
+                # 2. Extract DP (Rule-based/Viterbi) Candidate 
+                # Run the Viterbi stemmer on this eojeol
+                dp_results = self.stemmer.analyze(eojeol)
+                dp_morphs = []
+                for sent_morphs in dp_results:
+                    dp_morphs.extend(sent_morphs)
+                
+                # Calculate DP confidence (heuristic based on OOV/unregistered words)
+                # Dictionary matches have high confidence. OOV has low confidence.
+                dp_confidence = 1.0
+                for m in dp_morphs:
+                    # Look up in trie to see if it's securely registered
+                    is_registered = False
+                    if self.trie:
+                        # try to find exact match
+                        patterns = self.trie.search_all_patterns(m.surface)
+                        for start, end, pat_list in patterns:
+                            if start == 0 and end == len(m.surface):
+                                for pos, lemma in pat_list:
+                                    if pos == m.pos:
+                                        is_registered = True
                                         break
-                                    current_len += len(rwm)
-
-                                # If strict alignment found
-                                if split_idx != -1:
-                                    prefix_res = res[:split_idx]
-                                    # Use the dictionary POS. Preference: EF > others for final position?
-                                    # If dictionary returns multiple POS (e.g. "는" can be JX or ETM),
-                                    # "는다" is likely EF only.
-
-                                    # If multiple tags in known_pos (e.g. "NNG,MAG"), be careful.
-                                    # Prioritize Eomi/Josa.
-                                    final_tag = "UNKNOWN"
-                                    for tag in [
-                                        "EF",
-                                        "EC",
-                                        "EP",
-                                        "JKS",
-                                        "JKO",
-                                        "JKB",
-                                        "JX",
-                                    ]:
-                                        if tag in known_pos:
-                                            final_tag = tag
-                                            break
-
-                                    if final_tag != "UNKNOWN":
-                                        refined_res = prefix_res + [(suffix, final_tag)]
-                                        found_correction = True
-                                        break
-
-                    if found_correction:
-                        # Update res
-                        res = refined_res
-
-                morphemes.extend(res)
-            # Reconstruct Morph objects from neural results (which are tuples)
-            return [Morph(w, p, w) for w, p in morphemes]
+                                if is_registered:
+                                    break
+                    
+                    if not is_registered and m.pos == "NNG":
+                        # Likely an OOV guessed by DP penalty
+                        dp_confidence *= 0.5
+                    elif is_registered:
+                        dp_confidence *= 0.99 # Small penalty per morph to favor shorter paths
+                
+                # 3. Log-Linear Interpolation & Decision
+                # Weights: How much we trust Neural vs DP
+                # Neural is great for out-of-context smoothing. DP is absolute for Dictionary.
+                W_NEURAL = 0.6
+                W_DP = 0.4
+                
+                # Heuristic Override: If Neural confidence is extremely low (< 0.3) 
+                # and DP confidence is high (> 0.8), trust Dictionary absolute.
+                if neural_confidence < 0.3 and dp_confidence > 0.8:
+                    chosen_morphs = dp_morphs
+                    logger.debug(f"[{eojeol}] DP Override: Neural={neural_confidence:.2f}, DP={dp_confidence:.2f}")
+                # Otherwise use Log-Linear score
+                else:
+                    neural_score = W_NEURAL * neural_confidence
+                    dp_score = W_DP * dp_confidence
+                    
+                    if dp_score > neural_score:
+                        chosen_morphs = dp_morphs
+                        logger.debug(f"[{eojeol}] Chose DP: Neural={neural_score:.4f}, DP={dp_score:.4f}")
+                    else:
+                        chosen_morphs = neural_morphs
+                        logger.debug(f"[{eojeol}] Chose Neural: Neural={neural_score:.4f}, DP={dp_score:.4f}")
+                        
+                morphemes.extend(chosen_morphs)
+            
+            return morphemes
 
         # 공백으로 어절 분리
         eojeols = text.split()

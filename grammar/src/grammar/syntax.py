@@ -286,35 +286,53 @@ class SyntaxAnalyzer:
                         print(f"  [DEBUG] Unknown Deprel: {deprel} for word {word}")
 
                     # -----------------------------------------------------------------
-                    # Rule-based Correction (Hybrid approach for Maximum Accuracy)
-                    # Neural models can make mistakes on long-distance dependencies or rare contexts.
-                    # Korean has explicit markers (Josa/Eomi) that are strong signals.
-                    # We override the neural prediction if a strong marker is present.
+                    # Deep Rule-based Correction (Absolute Accuracy)
                     # -----------------------------------------------------------------
-
                     if morph_analyzer:
                         input_morphs = morph_analyzer.analyze(word)
                         if input_morphs:
                             # Use reliable input POS
                             pos_seq = "+".join(m.pos for m in input_morphs)
 
+                    # Explicit, Absolute Rules for Korean Grammar
                     if "JKO" in pos_seq:
                         component = SentenceComponent.OBJECT
                     elif "JKS" in pos_seq:
+                        # Check if it precedes '되다' or '아니다' (Complement)
+                        # We will refine this later in `_refine_complements`, but base is Subject
                         component = SentenceComponent.SUBJECT
-                    # JX (Auxiliary Particle) is tricky, but often Subject/Topic in simple sentences.
-                    # Only override if current prediction seems very wrong (e.g. Predicate/Adverbial for a Noun+JX)
-                    elif "JX" in pos_seq and component in [
-                        SentenceComponent.PREDICATE,
-                        SentenceComponent.ADVERBIAL,
-                    ]:
-                        component = SentenceComponent.SUBJECT
+                    elif "JKC" in pos_seq:
+                        component = SentenceComponent.COMPLEMENT    
                     elif "JKB" in pos_seq:
                         component = SentenceComponent.ADVERBIAL
                     elif "JKG" in pos_seq:
                         component = SentenceComponent.DETERMINER
-                    elif "EF" in pos_seq and component != SentenceComponent.PREDICATE:
+                    elif "JX" in pos_seq:
+                        # JX is auxiliary. If Neural says Object or Adverbial, we might trust it.
+                        # But if Neural is UNKNOWN, default to SUBJECT for top-level topics (은/는).
+                        if component == SentenceComponent.UNKNOWN:
+                            component = SentenceComponent.SUBJECT
+                        # Overriding heavily wrong neural predictions
+                        elif component in [SentenceComponent.PREDICATE, SentenceComponent.PUNCTUATION]:
+                            component = SentenceComponent.SUBJECT
+                    elif "JC" in pos_seq:  # 접속조사
+                        component = SentenceComponent.ADVERBIAL
+                        
+                    # Endings and Verbs
+                    elif "EF" in pos_seq:
                         component = SentenceComponent.PREDICATE
+                    elif "ETM" in pos_seq:
+                        component = SentenceComponent.DETERMINER
+                    elif "EC" in pos_seq or "ETN" in pos_seq:
+                        # Depending on the suffix, EC can be Adverbial (e.g., -게, -도록)
+                        if component == SentenceComponent.UNKNOWN:
+                            component = SentenceComponent.ADVERBIAL
+                    elif "MAG" in pos_seq or "MAJ" in pos_seq or "ADV" in pos_seq:
+                        component = SentenceComponent.ADVERBIAL
+                    elif "MM" in pos_seq:
+                        component = SentenceComponent.DETERMINER
+                    elif "IC" in pos_seq:
+                        component = SentenceComponent.INDEPENDENT
 
                     results.append((word, pos_seq, component))
 

@@ -144,13 +144,18 @@ class NeuralWrapper:
         with torch.no_grad():
             # (B, T, NumTags)
             logits = self.morph_model(x, mask=mask)
-            tag_ids_batch = logits.argmax(dim=-1).tolist()
+            probs = torch.softmax(logits, dim=-1) # (B, T, NumTags)
+            max_probs, tag_ids_batch = probs.max(dim=-1)
+            
+            tag_ids_batch = tag_ids_batch.tolist()
+            max_probs_batch = max_probs.tolist()
 
             results = []
             for i, tag_ids in enumerate(tag_ids_batch):
                 # Decode only valid length
                 valid_len = lengths[i]
                 valid_tag_ids = tag_ids[:valid_len]
+                valid_probs = max_probs_batch[i][:valid_len]
                 valid_chars = batch_chars[i]
 
                 tags = [self.morph_tag_vocab.get_item(t) for t in valid_tag_ids]
@@ -159,25 +164,37 @@ class NeuralWrapper:
                 morphemes = []
                 current_surf = ""
                 current_pos = None
+                current_prob_sum = 0.0
+                current_char_count = 0
 
-                for char, tag in zip(valid_chars, tags):
+                for char, tag, prob in zip(valid_chars, tags, valid_probs):
                     if tag.startswith("B-"):
                         if current_surf:
-                            morphemes.append((current_surf, current_pos))
+                            # Save previous
+                            avg_prob = current_prob_sum / current_char_count if current_char_count > 0 else 0.0
+                            morphemes.append((current_surf, current_pos, avg_prob))
                         current_surf = char
                         current_pos = tag[2:]
+                        current_prob_sum = prob
+                        current_char_count = 1
                     elif tag.startswith("I-"):
                         current_surf += char
                         if current_pos is None:
                             current_pos = tag[2:]
+                        current_prob_sum += prob
+                        current_char_count += 1
                     else:
                         if current_surf:
-                            morphemes.append((current_surf, current_pos))
+                            avg_prob = current_prob_sum / current_char_count if current_char_count > 0 else 0.0
+                            morphemes.append((current_surf, current_pos, avg_prob))
                             current_surf = ""
                             current_pos = None
+                            current_prob_sum = 0.0
+                            current_char_count = 0
 
                 if current_surf:
-                    morphemes.append((current_surf, current_pos))
+                    avg_prob = current_prob_sum / current_char_count if current_char_count > 0 else 0.0
+                    morphemes.append((current_surf, current_pos, avg_prob))
 
                 results.append(morphemes)
 

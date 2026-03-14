@@ -28,10 +28,85 @@ def simplify_cluster(jong: str, next_cho: str = '') -> str:
         
     return CLUSTER_SIMPLE.get(jong, jong)
 
-def pronounce(text: str) -> str:
+def pronounce(text: str, morph_analyzer=None, is_romanization=False) -> str:
     """한글 문장을 표준 발음으로 변환합니다."""
     if not text:
         return ""
+
+    # =========================================================================
+    # 0. Exception Dictionary & POS-based Context (Pre-processing)
+    # =========================================================================
+    # Hardcoded or explicit exception dictionary for words that don't follow standard rules
+    # or have idiomatic pronunciations.
+    OVI_DICTIONARY = {
+        "깻잎": "깬닙",
+        "순대국": "순대꾹",
+        "효과": "효꽈",
+        "불법": "불뻡",
+        "관건": "관껀",
+        "인사말": "인사말", # (not 인산말)
+        "머리말": "머리말",
+    }
+    
+    char_pos_map: Dict[int, str] = {}
+    
+    # If a MorphAnalyzer is provided, we can leverage POS tags for precise pronunciation.
+    if morph_analyzer:
+        # Example: '의' pronunciation rules
+        # 1. First syllable of a word -> [의] (의사 -> 의사)
+        # 2. Not first syllable -> [이] permitted, standard is [의]. (우리의 -> [우리에], 민주주의 -> [민주주의/민주주이])
+        # 3. JKG (Genitive particle '의') -> [에]
+        
+        morphemes = morph_analyzer.analyze(text)
+        if morphemes:
+            # Reconstruct text with POS-aware surface changes if needed
+            refined_text = ""
+            char_idx = 0
+            text_idx = 0
+            for i, m in enumerate(morphemes):
+                surface = m.surface
+                pos = m.pos
+                
+                # Check Exception Dict first for the whole surface
+                if surface in OVI_DICTIONARY:
+                    surface = OVI_DICTIONARY[surface]
+                else:
+                    # POS Specific Rules
+                    if pos == "JKG" and surface == "의":
+                        # 로마자 표기 시에는 '의'를 그대로 유지
+                        if not is_romanization:
+                            surface = "에" # Genitive particle is pronounced '에'
+                
+                # find where this morpheme starts in text to preserve spaces
+                idx = text.find(m.surface, text_idx)
+                if idx != -1:
+                    # append the spaces or punctuations that were skipped
+                    skipped = text[text_idx:idx]
+                    refined_text += skipped
+                    for _ in range(len(skipped)):
+                        char_pos_map[char_idx] = "SP" # mark space/punct
+                        char_idx += 1
+                        
+                    text_idx = idx + len(m.surface)
+                
+                refined_text += surface
+                for _ in range(len(surface)):
+                    char_pos_map[char_idx] = pos
+                    char_idx += 1
+            
+            # append any trailing characters
+            if text_idx < len(text):
+                trailing = text[text_idx:]
+                refined_text += trailing
+                for _ in range(len(trailing)):
+                    char_pos_map[char_idx] = "SP"
+                    char_idx += 1
+                    
+            text = refined_text
+    else:
+        # Without POS, apply simple Exception Dictionary search & replace.
+        for keyword, pron in OVI_DICTIONARY.items():
+            text = text.replace(keyword, pron)
 
     chars = []
     # Track original jongsung for Tensification rules (e.g. ㄵ -> ㄴ but triggers tensification)
@@ -66,6 +141,14 @@ def pronounce(text: str) -> str:
         
         # Case A: 받침 + ㅎ
         if cho2 == 'ㅎ':
+            # 체언의 'ㄱ,ㄷ,ㅂ' 연속 ㅎ 격음화 예외 (로마자 표기용)
+            if is_romanization and jong1 in ['ㄱ', 'ㄷ', 'ㅂ']:
+                pos_curr = char_pos_map.get(i, "")
+                pos_next = char_pos_map.get(i+1, "")
+                if pos_curr.startswith("N") or pos_next.startswith("N"):
+                    i += 1
+                    continue
+
             if jong1 in ['ㄱ', 'ㄲ', 'ㅋ', 'ㄳ', 'ㄺ']: merged_cho = 'ㅋ'
             elif jong1 in ['ㄷ', 'ㅅ', 'ㅆ', 'ㅈ', 'ㅊ', 'ㅌ']: merged_cho = 'ㅌ'
             elif jong1 in ['ㅂ', 'ㅍ', 'ㄼ', 'ㄿ', 'ㅄ']: merged_cho = 'ㅍ'
@@ -185,49 +268,51 @@ def pronounce(text: str) -> str:
              
     # [Pass 4] Tensification (경음화)
     # Using original_jongs to detect ㄵ(->ㄴ), ㄺ(->ㄹ/ㄱ) cases
-    for i in range(n - 1):
-        curr = chars[i]; nxt = chars[i+1]
-        if not isinstance(curr, list) or not isinstance(nxt, list): continue
-        
-        jong1 = curr[2] # Normalized
-        cho2 = nxt[0]
-        
-        if not jong1: continue
-        
-        should_tensify = False
-        
-        # 4-1. Post-Obstruent Tensification (Standard)
-        if jong1 in ['ㄱ', 'ㄷ', 'ㅂ'] and cho2 in ['ㄱ', 'ㄷ', 'ㅂ', 'ㅅ', 'ㅈ']:
-             should_tensify = True
-             
-        # 4-2. Verb Stem Tensification (Heuristic with Original Jong)
-        # 앉다(ㄵ), 읽고(ㄺ), 핥다(ㄾ), 읊다(ㄿ) ...
-        # If original was ㄵ, ㄶ, ㄻ, ㄼ, ㄾ, ㅀ AND current normalized is ㄴ, ㅁ, ㄹ
-        # AND next is ㄱ,ㄷ,ㅅ,ㅈ -> Tensify
-        orig = original_jongs.get(i, '')
-        
-        if orig in ['ㄵ', 'ㄶ', 'ㄻ', 'ㄼ', 'ㄾ', 'ㅀ']:
-            # Check if this word segment behaves like a verb stem?
-            # '여덟' (Eight) -> 여덜 [No tensify]. '넓다' (Wide) -> 널따 [Tensify].
-            # Hard to distinguish without POS.
-            # But user wants '앉다' -> '안따'.
-            # Assume tensification for these clusters if followed by relevant consonant.
-            if cho2 in ['ㄱ', 'ㄷ', 'ㅅ', 'ㅈ']:
-                should_tensify = True
-        
-        # 4-3. Specific case rule: ㄺ (읽고 -> 일꼬)
-        # ㄺ simplified to ㄹ in Pass 3 (if next was ㄱ).
-        # So jong1 is 'ㄹ'. 
-        # Stem 'ㄹ' (from ㄺ, ㄼ, ㄾ, ㅀ) + ㄱ,ㄷ,ㅅ,ㅈ -> Tensified.
-        if jong1 == 'ㄹ' and cho2 in ['ㄱ', 'ㄷ', 'ㅅ', 'ㅈ']:
-             # Check source
-             if orig in ['ㄺ', 'ㄼ', 'ㄾ', 'ㅀ']: # 읽고, 넓다, 핥다, 잃다
-                  should_tensify = True
-                  
-        if should_tensify:
-             tens_map = {'ㄱ':'ㄲ', 'ㄷ':'ㄸ', 'ㅂ':'ㅃ', 'ㅅ':'ㅆ', 'ㅈ':'ㅉ'}
-             if cho2 in tens_map:
-                 chars[i+1][0] = tens_map[cho2]
+    # 로마자 표기 시에는 된소리되기를 표기에 반영하지 않음 (예: 압구정 -> Apgujeong)
+    if not is_romanization:
+        for i in range(n - 1):
+            curr = chars[i]; nxt = chars[i+1]
+            if not isinstance(curr, list) or not isinstance(nxt, list): continue
+            
+            jong1 = curr[2] # Normalized
+            cho2 = nxt[0]
+            
+            if not jong1: continue
+            
+            should_tensify = False
+            
+            # 4-1. Post-Obstruent Tensification (Standard)
+            if jong1 in ['ㄱ', 'ㄷ', 'ㅂ'] and cho2 in ['ㄱ', 'ㄷ', 'ㅂ', 'ㅅ', 'ㅈ']:
+                 should_tensify = True
+                 
+            # 4-2. Verb Stem Tensification (Heuristic with Original Jong)
+            # 앉다(ㄵ), 읽고(ㄺ), 핥다(ㄾ), 읊다(ㄿ) ...
+            # If original was ㄵ, ㄶ, ㄻ, ㄼ, ㄾ, ㅀ AND current normalized is ㄴ, ㅁ, ㄹ
+            # AND next is ㄱ,ㄷ,ㅅ,ㅈ -> Tensify
+            orig = original_jongs.get(i, '')
+            
+            if orig in ['ㄵ', 'ㄶ', 'ㄻ', 'ㄼ', 'ㄾ', 'ㅀ']:
+                # Check if this word segment behaves like a verb stem?
+                # '여덟' (Eight) -> 여덜 [No tensify]. '넓다' (Wide) -> 널따 [Tensify].
+                # Hard to distinguish without POS.
+                # But user wants '앉다' -> '안따'.
+                # Assume tensification for these clusters if followed by relevant consonant.
+                if cho2 in ['ㄱ', 'ㄷ', 'ㅅ', 'ㅈ']:
+                    should_tensify = True
+            
+            # 4-3. Specific case rule: ㄺ (읽고 -> 일꼬)
+            # ㄺ simplified to ㄹ in Pass 3 (if next was ㄱ).
+            # So jong1 is 'ㄹ'. 
+            # Stem 'ㄹ' (from ㄺ, ㄼ, ㄾ, ㅀ) + ㄱ,ㄷ,ㅅ,ㅈ -> Tensified.
+            if jong1 == 'ㄹ' and cho2 in ['ㄱ', 'ㄷ', 'ㅅ', 'ㅈ']:
+                 # Check source
+                 if orig in ['ㄺ', 'ㄼ', 'ㄾ', 'ㅀ']: # 읽고, 넓다, 핥다, 잃다
+                      should_tensify = True
+                      
+            if should_tensify:
+                 tens_map = {'ㄱ':'ㄲ', 'ㄷ':'ㄸ', 'ㅂ':'ㅃ', 'ㅅ':'ㅆ', 'ㅈ':'ㅉ'}
+                 if cho2 in tens_map:
+                     chars[i+1][0] = tens_map[cho2]
              
     # [Pass 5] Assimilation (Nasal/Liquid)
     for i in range(n - 1):

@@ -1,5 +1,5 @@
 import hangul
-from pronunciation import pronounce
+from pronunciation.pronunciation import pronounce
 
 # Revised Romanization Mappings
 CHO_MAP = {
@@ -52,13 +52,14 @@ JONG_MAP_LITERAL = {
 }
 
 
-def romanize_pronunciation(text: str) -> str:
+def romanize_pronunciation(text: str, morph_analyzer=None) -> str:
     """
     Standard Revised Romanization based on pronunciation.
     Ex: 읽고 -> [일꼬] -> ilkko
     """
     # 1. Get standard pronunciation
-    p_text = pronounce(text)
+    # 로마자 표기법 준수를 위해 is_romanization 플래그 전달
+    p_text = pronounce(text, morph_analyzer=morph_analyzer, is_romanization=True)
     
     res = []
     for char in p_text:
@@ -74,6 +75,10 @@ def romanize_pronunciation(text: str) -> str:
             r_cho = CHO_MAP.get(cho, "")
             r_jung = JUNG_MAP.get(jung, "")
             r_jong = JONG_MAP.get(jong, "")
+            
+            # 로마자 표기법 예외: 'ㄹㄹ'은 'll'로 적음 (예: 신라 -> [실라] -> silla)
+            if r_cho == "r" and res and res[-1].endswith("l"):
+                r_cho = "l"
             
             res.append(r_cho + r_jung + r_jong)
         else:
@@ -101,9 +106,9 @@ def romanize_standard(text: str) -> str:
             
     return "".join(res)
 
-def romanize(text: str) -> str:
+def romanize(text: str, morph_analyzer=None) -> str:
     """Default alias to pronunciation-based romanization."""
-    return romanize_pronunciation(text)
+    return romanize_pronunciation(text, morph_analyzer=morph_analyzer)
 
-def romanize_korean(text: str) -> str:
-    return romanize(text)
+def romanize_korean(text: str, morph_analyzer=None) -> str:
+    return romanize(text, morph_analyzer=morph_analyzer)
