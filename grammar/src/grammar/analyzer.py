@@ -142,7 +142,7 @@ class MorphAnalyzer:
         """실험적 버전 법적 면책 고지 출력"""
         notice = [
             "  " + "=" * 56,
-            "  KULIM (Korean Unified Linguistic Integration Manager) v0.1.1",
+            "  KULIM (Korean Unified Linguistic Integration Manager) v0.1.2",
             "  [!] 법적 고지 및 면책 조항 (Legal Notice & Disclaimer)",
             "  - 본 소프트웨어는 '실험적 정식 버전'으로 제공됩니다.",
             "  - 결과의 무결성이나 정확성을 보장하지 않으며,",

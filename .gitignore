@@ -43,6 +43,7 @@ target/
 
 # Project Data
 *.conllu
+!resource/ko_kaist-ud-train.conllu
 data/
 자료/
 *.log

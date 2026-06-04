@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/package-grammar-blue.svg?style=flat-square" alt="Package">
-  <img src="https://img.shields.io/badge/version-v0.1.1-blue.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.1.2-blue.svg?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/accelerated-rust-orange.svg?style=flat-square" alt="Rust">
   <a href="README.md"><img src="https://img.shields.io/badge/lang-korean-green.svg?style=flat-square" alt="Korean"></a>
 </p>

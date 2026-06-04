@@ -8,6 +8,7 @@ class NeutralizationRule(PronunciationRule):
     JONG_NEUTRAL = {
         "ㄲ": "ㄱ", "ㄳ": "ㄱ", "ㅋ": "ㄱ",
         "ㅅ": "ㄷ", "ㅆ": "ㄷ", "ㅈ": "ㄷ", "ㅊ": "ㄷ", "ㅌ": "ㄷ", "ㅎ": "ㄷ",
+        "ㅍ": "ㅂ",
         "ㄼ": "ㄹ", "ㄽ": "ㄹ", "ㄾ": "ㄹ", "ㅀ": "ㄹ",
         "ㄵ": "ㄴ", "ㄶ": "ㄴ",
         "ㄻ": "ㅁ",
@@ -69,6 +70,10 @@ class LiaisonRule(PronunciationRule):
                 continue
                 
             # If next starts with vowel (cho == 'ㅇ')
+            # 단, 'ㅇ' 받침[ŋ]은 연음되지 않음 (잉어 → 이어(x), 잉어(o))
+            if p.jong == 'ㅇ':
+                continue
+                
             if nxt.cho == 'ㅇ':
                 # H-deletion check typically happens here or before.
                 # ㅎ, ㄶ, ㅀ + Vowel

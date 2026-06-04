@@ -29,30 +29,96 @@ class TransitionModel:
 
         # Noun + Josa
         if prev_pos.startswith("N") and curr_pos.startswith("J"):
-            return -20.0  # BONUS_NOUN_JOSA
+            return -25.0  # BONUS_NOUN_JOSA
 
-        # Verb + Eomi
+        # Josa + Noun (e.g., 에 + 집)
+        if prev_pos.startswith("J") and curr_pos.startswith("N"):
+            return -10.0
+
+        # Verb/Adj + Eomi
         if prev_pos.startswith("V") and curr_pos.startswith("E"):
-            return -15.0  # BONUS_VERB_EOMI
+            return -20.0  # BONUS_VERB_EOMI
 
-        # Eomi + Eomi
+        # Eomi + Eomi (연결어미 + 보조사/어미)
         if prev_pos.startswith("E") and curr_pos.startswith("E"):
-            return -10.0  # BONUS_EOMI_EOMI
+            return -12.0  # BONUS_EOMI_EOMI
+
+        # Eomi + Josa (e.g., 기 + 에)
+        if prev_pos == "ETN" and curr_pos.startswith("J"):
+            return -15.0
 
         # Adverb + Noun
         if prev_pos == "MAG" and curr_pos.startswith("N"):
-            return -15.0  # BONUS_ADVERB_NOUN
+            return -18.0  # BONUS_ADVERB_NOUN
 
         # Adverb + Verb
         if prev_pos == "MAG" and curr_pos.startswith("V"):
-            return -10.0  # BONUS_ADVERB_VERB
+            return -12.0  # BONUS_ADVERB_VERB
 
         # Determiner + Noun
         if prev_pos == "MM" and curr_pos.startswith("N"):
-            return -10.0  # BONUS_DETERMINER_NOUN
+            return -15.0  # BONUS_DETERMINER_NOUN
+
+        # Noun + Verb (명사+하다/되다 등)
+        if prev_pos.startswith("N") and curr_pos.startswith("V"):
+            return -8.0
+
+        # Noun + Copula (N + 이다/아니다)
+        if prev_pos.startswith("N") and curr_pos in ("VCP", "VCN"):
+            return -15.0
+
+        # Copula + Eomi
+        if prev_pos in ("VCP", "VCN") and curr_pos.startswith("E"):
+            return -15.0
+
+        # Number + Noun (수사+명사)
+        if prev_pos == "NR" and curr_pos.startswith("N"):
+            return -10.0
+
+        # Number + Number
+        if prev_pos == "NR" and curr_pos == "NR":
+            return -15.0
+
+        # Noun + Noun (합성명사)
+        if prev_pos.startswith("N") and curr_pos.startswith("N"):
+            return -12.0
+
+        # Interjection + Josa
+        if prev_pos == "IC" and curr_pos.startswith("J"):
+            return -10.0
+
+        # Affix + Eomi (XSV/XSA/.. + Eomi)
+        if prev_pos.startswith("X") and curr_pos.startswith("E"):
+            return -15.0
+
+        # Affix + Josa (XSN + Josa)
+        if prev_pos.startswith("XS") and curr_pos.startswith("J"):
+            return -15.0
+
+        # Prefix + Noun (XPN + NNG)
+        if prev_pos == "XPN" and curr_pos.startswith("N"):
+            return -12.0
+
+        # Auxiliary verb + Eomi (VX + E)
+        if prev_pos == "VX" and curr_pos.startswith("E"):
+            return -12.0
+
+        # Eomi + Auxiliary (E + VX)
+        if prev_pos.startswith("E") and curr_pos == "VX":
+            return -8.0
+
+        # Auxiliary + Auxiliary
+        if prev_pos == "VX" and curr_pos == "VX":
+            return -10.0
+
+        # Final ending + anything (high penalty - should be sentence end)
+        if prev_pos == "EF":
+            if curr_pos.startswith("S"):
+                return 0.0
+            return 25.0
 
         # 3. Default Penalty
-        return 10.0
+        return 15.0
 
     def train(self, transitions: Dict[str, float]):
         self.transitions = transitions
@@ -78,7 +144,7 @@ class ScoringConfig:
     COST_MEDIUM_WORD: float = -30.0
     COST_SHORT_WORD: float = -5.0
 
-    COST_OOV: float = 50.0
+    COST_OOV: float = 30.0
 
     # Bonuses/Penalties (Backward Compat + Heuristics)
     PENALTY_SINGLE_VERB_IC: float = 20.0

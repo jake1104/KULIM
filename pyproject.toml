@@ -1,7 +1,7 @@
 
 [project]
 name = "kulim-workspace"
-version = "0.1.1"
+version = "0.1.2"
 description = "Korean Unified Linguistic Integration Manager (KULIM) Workspace"
 authors = [
     { name = "Jeongwoo Ahn", email = "iamjake1104@gmail.com" }

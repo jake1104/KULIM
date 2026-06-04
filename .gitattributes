@@ -1,1 +1,2 @@
-model/release_model.kg filter=lfs diff=lfs merge=lfs -text
+*.kg filter=lfs diff=lfs merge=lfs -text
+*.conllu filter=lfs diff=lfs merge=lfs -text

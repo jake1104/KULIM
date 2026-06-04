@@ -37,11 +37,11 @@ class AspirationRule(PronunciationRule):
         return phonemes
 
     def _merge_h(self, jong):
-        # ㄳ cannot merge to ㅋ? 몫하다 -> [목카다]. Yes. ㄱ+ㅎ -> ㅋ.
+        # Order matters: more specific checks first
+        if any(c in jong for c in ['ㄵ', '앉']): return 'ㅊ' # 앉히다 -> 안치다
         if any(c in jong for c in ['ㄱ', 'ㄲ', 'ㅋ']): return 'ㅋ'
         if any(c in jong for c in ['ㄷ', 'ㅅ', 'ㅆ', 'ㅈ', 'ㅊ', 'ㅌ']): return 'ㅌ'
         if any(c in jong for c in ['ㅂ', 'ㅍ']): return 'ㅍ'
-        if any(c in jong for c in ['ㄵ', '앉']): return 'ㅊ' # 앉히다 -> 안치다
         return None
 
     def _remove_h_trigger(self, jong):
@@ -49,10 +49,9 @@ class AspirationRule(PronunciationRule):
         if jong == 'ㄺ': return 'ㄹ'
         if jong == 'ㄼ': return 'ㄹ'
         if jong == 'ㄵ': return 'ㄴ'
-        if jong == 'ㄳ': return 'ㄴ' # (Correction from prev log: 몫하다 -> 목카다 means ㄳ->ㄱ then +ㅎ->ㅋ. residue is None?)
-        # Just simplifies to '' for single jongs.
+        if jong == 'ㄳ': return '' # 몫하다 -> [목카다], ㅅ 탈락
         if len(jong) == 1: return ''
-        return '' # Simplify mostly
+        return ''
 
 class PalatalizationRule(PronunciationRule):
     """구개음화 (Palatalization)"""

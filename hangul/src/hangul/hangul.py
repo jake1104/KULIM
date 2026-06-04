@@ -122,13 +122,16 @@ def decompose(ch: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     if (0x11A8 <= code_raw <= 0x11F9) or (0xD7CB <= code_raw <= 0xD7FB):
         return ("", "", ch)
         
-    # Compat Jamo (3130-318F) - ambiguous, usually treated as Cho if consonant
-    # For now, return (None, None, None) or handle specifically?
-    # Consonants 3131-314E, Vowels 314F-3163
-    if 0x3131 <= code_raw <= 0x314E or 0x3165 <= code_raw <= 0x318E: # Consonants
-        return (ch, "", "") # As Cho
-    if 0x314F <= code_raw <= 0x3163: # Vowels
-        return ("", ch, "") # As Jung
+    # Compat Jamo (3130-318F) - standard classification only
+    # Consonants 3131-314E (modern)
+    if 0x3131 <= code_raw <= 0x314E:
+        return (ch, "", "")
+    # Vowels 314F-3163 (modern)
+    if 0x314F <= code_raw <= 0x3163:
+        return ("", ch, "")
+    # 0x3164-0x318E: 옛한글 compatibility jamo (mixed vowels/consonants)
+    # Cannot reliably classify without context; return (None, None, None)
+    # Users should use the Jamo block (0x1100-0x11FF) for old Hangul
 
     return (None, None, None)
 

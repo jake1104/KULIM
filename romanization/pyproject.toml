@@ -1,6 +1,6 @@
 [project]
 name = "romanization"
-version = "0.1.1"
+version = "0.1.2"
 requires-python = ">=3.11,<4.0"
 description = "KULIM Korean Romanization (Revised Romanization)"
 license = { text = "CC BY-SA 4.0" }

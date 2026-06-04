@@ -5,6 +5,7 @@ import hangul
 JONG_NEUTRAL = {
     "ㄲ": "ㄱ", "ㄳ": "ㄱ", "ㅋ": "ㄱ",
     "ㅅ": "ㄷ", "ㅆ": "ㄷ", "ㅈ": "ㄷ", "ㅊ": "ㄷ", "ㅌ": "ㄷ", "ㅎ": "ㄷ",
+    "ㅍ": "ㅂ",
     "ㄼ": "ㄹ", "ㄽ": "ㄹ", "ㄾ": "ㄹ", "ㅀ": "ㄹ",
     "ㄵ": "ㄴ", "ㄶ": "ㄴ",
     "ㄻ": "ㅁ",
@@ -170,7 +171,7 @@ def pronounce(text: str, morph_analyzer=None, is_romanization=False) -> str:
                     if jong1 == 'ㄺ': chars[i][2] = 'ㄹ'
                     elif jong1 == 'ㄼ': chars[i][2] = 'ㄹ'
                     elif jong1 == 'ㄵ': chars[i][2] = 'ㄴ'
-                    elif jong1 == 'ㄳ': chars[i][2] = 'ㄴ' # 몫하다? (ㄴ?) usually ㄱ+ㅎ -> ㅋ so ㄳ -> ㄱㅅ. ㅅ+ㅎ->ㅌ?
+                    elif jong1 == 'ㄳ': chars[i][2] = '' # 몫하다 -> [목카다], ㅅ 탈락
                     # Let's simplify: map to primary residue
                     elif jong1 == 'ㄶ': chars[i][2] = 'ㄴ'
                     elif jong1 == 'ㅀ': chars[i][2] = 'ㄹ'
@@ -224,8 +225,8 @@ def pronounce(text: str, morph_analyzer=None, is_romanization=False) -> str:
             elif jong1 == 'ㅌ': chars[i+1][0] = 'ㅊ'; chars[i][2] = ''
             elif jong1 == 'ㄾ': chars[i+1][0] = 'ㅊ'; chars[i][2] = 'ㄹ'
             
-        # 2-3. Liaison
-        if chars[i][2] and chars[i+1][0] == 'ㅇ':
+        # 2-3. Liaison (단, 'ㅇ' 받침[ŋ]은 연음되지 않음)
+        if chars[i][2] and chars[i+1][0] == 'ㅇ' and chars[i][2] != 'ㅇ':
              j = chars[i][2]
              if j in hangul.CHOSUNG:
                  chars[i+1][0] = j; chars[i][2] = ''
@@ -268,51 +269,54 @@ def pronounce(text: str, morph_analyzer=None, is_romanization=False) -> str:
              
     # [Pass 4] Tensification (경음화)
     # Using original_jongs to detect ㄵ(->ㄴ), ㄺ(->ㄹ/ㄱ) cases
-    # 로마자 표기 시에는 된소리되기를 표기에 반영하지 않음 (예: 압구정 -> Apgujeong)
-    if not is_romanization:
-        for i in range(n - 1):
-            curr = chars[i]; nxt = chars[i+1]
-            if not isinstance(curr, list) or not isinstance(nxt, list): continue
-            
-            jong1 = curr[2] # Normalized
-            cho2 = nxt[0]
-            
-            if not jong1: continue
-            
-            should_tensify = False
-            
-            # 4-1. Post-Obstruent Tensification (Standard)
-            if jong1 in ['ㄱ', 'ㄷ', 'ㅂ'] and cho2 in ['ㄱ', 'ㄷ', 'ㅂ', 'ㅅ', 'ㅈ']:
-                 should_tensify = True
+    # 로마자 표기 시 표준 발음에 따라 적는 것이 원칙.
+    # - 용언 어간 경음화 (읽고→일꼬→ilkko): 반영
+    # - 체언 합성어 경음화 (압구정→압꾸정→apgujeong): 미반영 (관용)
+    for i in range(n - 1):
+        curr = chars[i]; nxt = chars[i+1]
+        if not isinstance(curr, list) or not isinstance(nxt, list): continue
+        
+        jong1 = curr[2] # Normalized
+        cho2 = nxt[0]
+        
+        if not jong1: continue
+        
+        should_tensify = False
+        
+        # 4-1. Post-Obstruent Tensification (Standard)
+        # 로마자 표기 시 체언 합성어 경음화는 반영하지 않음 (예: 압구정)
+        if jong1 in ['ㄱ', 'ㄷ', 'ㅂ'] and cho2 in ['ㄱ', 'ㄷ', 'ㅂ', 'ㅅ', 'ㅈ']:
+            if not is_romanization:
+                should_tensify = True
+            else:
+                # Check POS via char_pos_map if morph_analyzer was provided
+                pos_curr = char_pos_map.get(i, "")
+                pos_next = char_pos_map.get(i+1, "")
+                # 합성어 경음화: 체언(N) 뒤 체언(N) or 자음 -> 관용적 표기 유지
+                if pos_curr.startswith("V") or pos_next.startswith("V"):
+                    should_tensify = True  # 용언 어간 + 어미 경음화는 반영
+                elif not pos_curr and not pos_next:
+                    should_tensify = False  # 형태소 정보 없음 -> 미반영
                  
-            # 4-2. Verb Stem Tensification (Heuristic with Original Jong)
-            # 앉다(ㄵ), 읽고(ㄺ), 핥다(ㄾ), 읊다(ㄿ) ...
-            # If original was ㄵ, ㄶ, ㄻ, ㄼ, ㄾ, ㅀ AND current normalized is ㄴ, ㅁ, ㄹ
-            # AND next is ㄱ,ㄷ,ㅅ,ㅈ -> Tensify
-            orig = original_jongs.get(i, '')
-            
-            if orig in ['ㄵ', 'ㄶ', 'ㄻ', 'ㄼ', 'ㄾ', 'ㅀ']:
-                # Check if this word segment behaves like a verb stem?
-                # '여덟' (Eight) -> 여덜 [No tensify]. '넓다' (Wide) -> 널따 [Tensify].
-                # Hard to distinguish without POS.
-                # But user wants '앉다' -> '안따'.
-                # Assume tensification for these clusters if followed by relevant consonant.
-                if cho2 in ['ㄱ', 'ㄷ', 'ㅅ', 'ㅈ']:
-                    should_tensify = True
-            
-            # 4-3. Specific case rule: ㄺ (읽고 -> 일꼬)
-            # ㄺ simplified to ㄹ in Pass 3 (if next was ㄱ).
-            # So jong1 is 'ㄹ'. 
-            # Stem 'ㄹ' (from ㄺ, ㄼ, ㄾ, ㅀ) + ㄱ,ㄷ,ㅅ,ㅈ -> Tensified.
-            if jong1 == 'ㄹ' and cho2 in ['ㄱ', 'ㄷ', 'ㅅ', 'ㅈ']:
-                 # Check source
-                 if orig in ['ㄺ', 'ㄼ', 'ㄾ', 'ㅀ']: # 읽고, 넓다, 핥다, 잃다
-                      should_tensify = True
-                      
-            if should_tensify:
-                 tens_map = {'ㄱ':'ㄲ', 'ㄷ':'ㄸ', 'ㅂ':'ㅃ', 'ㅅ':'ㅆ', 'ㅈ':'ㅉ'}
-                 if cho2 in tens_map:
-                     chars[i+1][0] = tens_map[cho2]
+        # 4-2. Verb Stem Tensification (Heuristic with Original Jong)
+        # 앉다(ㄵ), 읽고(ㄺ), 핥다(ㄾ), 읊다(ㄿ) ...
+        # 용언 어간 경음화는 로마자 표기에도 반영
+        orig = original_jongs.get(i, '')
+        
+        if orig in ['ㄵ', 'ㄶ', 'ㄻ', 'ㄼ', 'ㄾ', 'ㅀ']:
+            if cho2 in ['ㄱ', 'ㄷ', 'ㅅ', 'ㅈ']:
+                should_tensify = True
+        
+        # 4-3. Specific case rule: ㄺ (읽고 -> 일꼬)
+        # 용언 어간 ㄺ 경음화도 로마자 표기에 반영
+        if jong1 == 'ㄹ' and cho2 in ['ㄱ', 'ㄷ', 'ㅅ', 'ㅈ']:
+             if orig in ['ㄺ', 'ㄼ', 'ㄾ', 'ㅀ']:
+                  should_tensify = True
+                  
+        if should_tensify:
+             tens_map = {'ㄱ':'ㄲ', 'ㄷ':'ㄸ', 'ㅂ':'ㅃ', 'ㅅ':'ㅆ', 'ㅈ':'ㅉ'}
+             if cho2 in tens_map:
+                 chars[i+1][0] = tens_map[cho2]
              
     # [Pass 5] Assimilation (Nasal/Liquid)
     for i in range(n - 1):

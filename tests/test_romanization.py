@@ -7,7 +7,7 @@ def test_romanization_rr_phonetic():
     assert romanize("독립") == "dongnip"
     
     # Specific cases
-    assert romanize_pronunciation("읽고") == "ilgo"
+    assert romanize_pronunciation("읽고") == "ilkko"
     assert romanize_pronunciation("값이") == "gapssi"
     assert romanize_pronunciation("같이") == "gachi"
     # assert romanize_pronunciation("싫어") == "sireo" # Depending on H-deletion, maybe sideo or sireo, skipping for now to focus on exception dict.

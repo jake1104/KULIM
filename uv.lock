@@ -93,7 +93,7 @@ wheels = [
 
 [[package]]
 name = "grammar"
-version = "0.1.1"
+version = "0.1.2"
 source = { editable = "grammar" }
 dependencies = [
     { name = "hangul" },
@@ -143,7 +143,7 @@ wheels = [
 
 [[package]]
 name = "kulim"
-version = "0.1.1"
+version = "0.1.2"
 source = { editable = "kulim" }
 dependencies = [
     { name = "grammar" },
@@ -531,7 +531,7 @@ wheels = [
 
 [[package]]
 name = "pronunciation"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "pronunciation" }
 dependencies = [
     { name = "hangul" },
@@ -567,7 +567,7 @@ wheels = [
 
 [[package]]
 name = "romanization"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "romanization" }
 dependencies = [
     { name = "hangul" },

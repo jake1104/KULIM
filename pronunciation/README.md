@@ -2,8 +2,9 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/package-pronunciation-blue.svg?style=flat-square" alt="Package">
-  <img src="https://img.shields.io/badge/version-v0.1.0-blue.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.1.2-blue.svg?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/python-3.11+-blue.svg?style=flat-square&logo=python" alt="Python">
+  <a href="README.en.md"><img src="https://img.shields.io/badge/lang-english-green.svg?style=flat-square" alt="English"></a>
 </p>
 
 ---
