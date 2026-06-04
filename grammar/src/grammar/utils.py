@@ -33,4 +33,4 @@ def get_version() -> str:
         try:
             return version("grammar")
         except PackageNotFoundError:
-            return "0.1.2"
+            return "0.1.3"

@@ -1,7 +1,7 @@
 # KULIM (Korean Unified Linguistic Integration Manager)
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.1.2-blue.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.1.3-blue.svg?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/python-3.11+-blue.svg?style=flat-square&logo=python" alt="Python">
   <img src="https://img.shields.io/badge/rust-accelerated-orange.svg?style=flat-square&logo=rust" alt="Rust">
   <img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License">
@@ -17,11 +17,11 @@ KULIM is a Korean language processing framework providing morphological analysis
 
 | Package | Version | Description |
 |---------|---------|-------------|
-| [grammar](grammar/) | 0.1.2 | Morphological and syntax analysis engine |
-| [hangul](hangul/) | 0.1.2 | Hangul processing utilities (jamo decomposition/composition) |
-| [pronunciation](pronunciation/) | 0.1.2 | Standard pronunciation conversion |
-| [romanization](romanization/) | 0.1.2 | Korean romanization (phonetic/literal modes) |
-| [kulim](kulim/) | 0.1.2 | Unified library interface |
+| [grammar](grammar/) | 0.1.3 | Morphological and syntax analysis engine |
+| [hangul](hangul/) | 0.1.3 | Hangul processing utilities (jamo decomposition/composition) |
+| [pronunciation](pronunciation/) | 0.1.3 | Standard pronunciation conversion |
+| [romanization](romanization/) | 0.1.3 | Korean romanization (phonetic/literal modes) |
+| [kulim](kulim/) | 0.1.3 | Unified library interface |
 
 ## Quick Start
 

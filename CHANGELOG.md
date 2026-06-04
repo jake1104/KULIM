@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.3] - 2026-06-05
+
+### Added
+- Trained HMM model with UD Korean Kaist corpus (23,013 sentences)
+- `model/kulim_model.kg` and `resource/kulim_model.kg` packaged models
+- GitHub Actions release workflow triggers on v* tags
+
+### Changed
+- Version bumped to 0.1.3
+
 ## [0.1.2] - 2026-06-05
 
 ### Added

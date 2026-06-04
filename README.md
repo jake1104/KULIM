@@ -1,7 +1,7 @@
 # KULIM (Korean Unified Linguistic Integration Manager)
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v0.1.2-blue.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.1.3-blue.svg?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/python-3.11+-blue.svg?style=flat-square&logo=python" alt="Python">
   <img src="https://img.shields.io/badge/rust-accelerated-orange.svg?style=flat-square&logo=rust" alt="Rust">
   <img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License">
@@ -17,11 +17,11 @@ KULIM은 한국어 처리를 위한 통합 프레임워크로, 형태소 분석,
 
 | 패키지 | 버전 | 설명 |
 |---------|---------|-------------|
-| [grammar](grammar/) | 0.1.2 | 형태소 및 구문 분석 엔진 |
-| [hangul](hangul/) | 0.1.2 | 한글 처리 유틸리티 (자모 분해/결합) |
-| [pronunciation](pronunciation/) | 0.1.2 | 표준 발음 변환 |
-| [romanization](romanization/) | 0.1.2 | 로마자 표기 (발음/철자 기반) |
-| [kulim](kulim/) | 0.1.2 | 통합 라이브러리 인터페이스 |
+| [grammar](grammar/) | 0.1.3 | 형태소 및 구문 분석 엔진 |
+| [hangul](hangul/) | 0.1.3 | 한글 처리 유틸리티 (자모 분해/결합) |
+| [pronunciation](pronunciation/) | 0.1.3 | 표준 발음 변환 |
+| [romanization](romanization/) | 0.1.3 | 로마자 표기 (발음/철자 기반) |
+| [kulim](kulim/) | 0.1.3 | 통합 라이브러리 인터페이스 |
 
 ## 빠른 시작
 
